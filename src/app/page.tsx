@@ -1406,13 +1406,46 @@ ${docText}
               if (!hasUrl || editingSheetUrl) {
                 const templateUri = "https://docs.google.com/spreadsheets/d/16lGiOWfQhGhGuVdHnP6pqhNeuJ3_GXUFwYeUTXyBH5M/copy";
                 return (
-                  <div className="text-center p-12 rounded-2xl max-w-2xl mx-auto" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e8eb', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+                  <div className="text-center p-10 rounded-2xl max-w-2xl mx-auto" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e8eb', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
                     <div className="text-[#3182f6] mb-4 flex justify-center"><FileSpreadsheet className="w-12 h-12" /></div>
                     <h4 className="font-bold text-[#191f28] mb-2 text-base">구글 WBS 시트 연동이 필요합니다</h4>
                     <p className="text-xs text-[#4e5968] mb-6 leading-relaxed">
-                      WBS 연동을 완료하려면 아래 버튼을 통해 템플릿 사본을 본인의 구글 드라이브에 복사한 후,<br />
-                      새로 복사된 구글 시트의 웹 브라우저 주소(URL)를 아래 입력창에 등록해 주세요.
+                      구글 드라이브 보안 정책상 새로 복사된 본인 사본의 고유 URL은 자동으로 전달되지 않습니다.<br />
+                      아래 3단계 절차에 따라 최초 1회 연동을 완료해 주세요.
                     </p>
+
+                    {/* 3단계 가이드 프로세스 */}
+                    <div className="grid grid-cols-3 gap-3 mb-6 text-left">
+                      <div className="p-3.5 rounded-xl bg-[#f2f4f6] border border-[#e5e8eb]">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#3182f6] text-white text-[10px] font-bold">1</span>
+                          <span className="text-[11px] font-bold text-[#191f28]">사본 만들기</span>
+                        </div>
+                        <p className="text-[10px] text-[#4e5968] leading-relaxed">
+                          아래 카드의 **[사본 만들기]** 버튼을 눌러 개인 드라이브에 시트를 복제합니다.
+                        </p>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-[#f2f4f6] border border-[#e5e8eb]">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#3182f6] text-white text-[10px] font-bold">2</span>
+                          <span className="text-[11px] font-bold text-[#191f28]">시트 URL 복사</span>
+                        </div>
+                        <p className="text-[10px] text-[#4e5968] leading-relaxed">
+                          복제된 시트 화면 상단의 **웹 브라우저 주소(URL)**를 전체 복사합니다.
+                        </p>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-[#f2f4f6] border border-[#e5e8eb]">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#3182f6] text-white text-[10px] font-bold">3</span>
+                          <span className="text-[11px] font-bold text-[#191f28]">이곳에 등록</span>
+                        </div>
+                        <p className="text-[10px] text-[#4e5968] leading-relaxed">
+                          아래 입력 필드에 주소를 붙여넣은 뒤 **[연동 및 저장]**을 누르면 연동 끝!
+                        </p>
+                      </div>
+                    </div>
                     
                     {/* 템플릿 바로가기 카드 */}
                     <div className="mb-6 p-4 rounded-xl bg-[#f9fafb] border border-[#e5e8eb] text-left">
@@ -1756,13 +1789,46 @@ ${docText}
                   if (!hasUrl || editingA11ySheetUrl) {
                     const templateUri = "https://docs.google.com/spreadsheets/d/13A49_Y4h7UxTsJG35CW4vQnC1S4S0UgDqhGjWL176hY/copy";
                     return (
-                      <div className="text-center p-12 rounded-2xl max-w-2xl mx-auto" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e8eb', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+                      <div className="text-center p-10 rounded-2xl max-w-2xl mx-auto" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e8eb', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
                         <div className="text-[#3182f6] mb-4 flex justify-center"><FileSpreadsheet className="w-12 h-12" /></div>
                         <h4 className="font-bold text-[#191f28] mb-2 text-base">구글 접근성 점검 시트 연동이 필요합니다</h4>
                         <p className="text-xs text-[#4e5968] mb-6 leading-relaxed">
-                          접근성 점검리스트 연동을 완료하려면 아래 버튼을 통해 템플릿 사본을 본인의 구글 드라이브에 복사한 후,<br />
-                          새로 복사된 구글 시트의 웹 브라우저 주소(URL)를 아래 입력창에 등록해 주세요.
+                          구글 드라이브 보안 정책상 새로 복사된 본인 사본의 고유 URL은 자동으로 전달되지 않습니다.<br />
+                          아래 3단계 절차에 따라 최초 1회 연동을 완료해 주세요.
                         </p>
+
+                        {/* 3단계 가이드 프로세스 */}
+                        <div className="grid grid-cols-3 gap-3 mb-6 text-left">
+                          <div className="p-3.5 rounded-xl bg-[#f2f4f6] border border-[#e5e8eb]">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#3182f6] text-white text-[10px] font-bold">1</span>
+                              <span className="text-[11px] font-bold text-[#191f28]">사본 만들기</span>
+                            </div>
+                            <p className="text-[10px] text-[#4e5968] leading-relaxed">
+                              아래 카드의 **[사본 만들기]** 버튼을 눌러 개인 드라이브에 시트를 복제합니다.
+                            </p>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl bg-[#f2f4f6] border border-[#e5e8eb]">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#3182f6] text-white text-[10px] font-bold">2</span>
+                              <span className="text-[11px] font-bold text-[#191f28]">시트 URL 복사</span>
+                            </div>
+                            <p className="text-[10px] text-[#4e5968] leading-relaxed">
+                              복제된 시트 화면 상단의 **웹 브라우저 주소(URL)**를 전체 복사합니다.
+                            </p>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl bg-[#f2f4f6] border border-[#e5e8eb]">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#3182f6] text-white text-[10px] font-bold">3</span>
+                              <span className="text-[11px] font-bold text-[#191f28]">이곳에 등록</span>
+                            </div>
+                            <p className="text-[10px] text-[#4e5968] leading-relaxed">
+                              아래 입력 필드에 주소를 붙여넣은 뒤 **[연동 및 저장]**을 누르면 연동 끝!
+                            </p>
+                          </div>
+                        </div>
                         
                         {/* 템플릿 바로가기 카드 */}
                         <div className="mb-6 p-4 rounded-xl bg-[#f9fafb] border border-[#e5e8eb] text-left">
