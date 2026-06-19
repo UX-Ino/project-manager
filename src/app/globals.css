@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Toss Light Background Hierarchy ── */
+  --color-bg-primary: #f9fafb;       /* Page background: very light gray */
+  --color-bg-secondary: #ffffff;     /* Card / Panel: pure white */
+  --color-bg-tertiary: #f2f4f6;      /* Input field, subtle panel */
+  --color-bg-glass: rgba(255, 255, 255, 0.9);
+
+  /* ── Border Colors ── */
+  --color-border-color: #e5e8eb;     /* Default border */
+  --color-border-focus: rgba(49, 130, 246, 0.35);
+
+  /* ── Text Colors (Toss official) ── */
+  --color-text-main: #191f28;        /* Primary text */
+  --color-text-muted: #8b95a1;       /* Secondary / placeholder */
+  --color-text-sub: #4e5968;         /* Sub text */
+  --color-text-inverse: #ffffff;
+
+  /* ── Brand Colors (Toss Blue) ── */
+  --color-brand-primary: #3182f6;
+  --color-brand-primary-hover: #1b64da;
+  --color-brand-accent: #00b493;     /* Toss green */
+  --color-brand-accent-hover: #009579;
+  --color-brand-warning: #ff9f0a;
+  --color-brand-danger: #f04452;
+  --color-brand-info: #4096ff;
+
+  /* ── Soft Background Tints ── */
+  --color-bg-primary-soft: rgba(49, 130, 246, 0.06);
+  --color-bg-accent-soft: rgba(0, 180, 147, 0.07);
+  --color-bg-warning-soft: rgba(255, 159, 10, 0.08);
+  --color-bg-danger-soft: rgba(240, 68, 82, 0.07);
+  --color-bg-info-soft: rgba(64, 150, 255, 0.07);
+
+  /* ── Radius ── */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  /* ── Typography ── */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-heading: var(--font-outfit), var(--font-inter), sans-serif;
+
+  /* ── Animations ── */
+  --animate-fade-in: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-fade-in-down: fadeInDown 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-slide-in: slideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Force light mode — prevent system dark mode from interfering */
+:root {
+  color-scheme: light only;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-main);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-main);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-brand-primary); }
+
+/* Glass panel — top header */
+.glass-panel {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--color-border-color);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+/* Toss-style card shadows */
+.card-shadow {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.card-shadow-hover:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(49, 130, 246, 0.12);
+}
+
+/* Toss-style input focus ring */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}
