@@ -12,6 +12,7 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -34,6 +35,9 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
         if (!email.endsWith('@etribe.co.kr')) {
           throw new Error('이트라이브 사내 이메일(@etribe.co.kr)로만 회원가입이 가능합니다.');
         }
+        if (password !== confirmPassword) {
+          throw new Error('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+        }
         const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -42,8 +46,13 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
           }
         });
         if (signUpError) throw signUpError;
+        
+        // 메일인증 안내 브라우저 알림창 출력
+        alert('회원가입이 완료되었습니다!\n적어주신 이메일(@etribe.co.kr) 메일함으로 발송된 인증 링크를 확인하신 후 클릭해 주세요.\n인증이 완료되어야 로그인이 가능합니다.');
+        
         setMessage('회원가입이 완료되었습니다! 이메일을 확인해 주세요.');
         setIsLogin(true);
+        setConfirmPassword('');
       }
     } catch (err: unknown) {
       const errorObj = err as Error;
@@ -95,7 +104,7 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
               </span>
               <button
                 type="button"
-                onClick={() => { setIsLogin(false); setError(''); setMessage(''); }}
+                onClick={() => { setIsLogin(false); setError(''); setMessage(''); setConfirmPassword(''); }}
                 className="flex-1 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer text-text-muted hover:text-text-sub"
               >
                 회원가입
@@ -105,7 +114,7 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
             <>
               <button
                 type="button"
-                onClick={() => { setIsLogin(true); setError(''); setMessage(''); }}
+                onClick={() => { setIsLogin(true); setError(''); setMessage(''); setConfirmPassword(''); }}
                 className="flex-1 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer text-text-muted hover:text-text-sub"
               >
                 로그인
@@ -206,6 +215,41 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
               />
             </div>
           </div>
+
+          {/* Password Confirm Field (Signup only) */}
+          {!isLogin && (
+            <div className="space-y-1.5 animate-fade-in">
+              <label
+                htmlFor="auth-confirm-password"
+                className="block text-xs font-semibold"
+                style={{ color: '#4e5968' }}
+              >
+                비밀번호 확인
+              </label>
+              <div className="relative">
+                <Lock
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4"
+                  style={{ color: '#8b95a1' }}
+                />
+                <input
+                  id="auth-confirm-password"
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border transition-all"
+                  style={{
+                    backgroundColor: '#f9fafb',
+                    borderColor: '#e5e8eb',
+                    color: '#191f28',
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = '#3182f6')}
+                  onBlur={(e) => (e.target.style.borderColor = '#e5e8eb')}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Submit Button */}
           <button
