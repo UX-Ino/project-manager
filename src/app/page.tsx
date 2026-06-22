@@ -4,11 +4,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, STORAGE_BUCKET } from '../lib/supabaseClient';
-import { 
-  LogOut, User, FolderPlus, Trash2, CheckSquare, Loader2, 
-  AlertCircle, LayoutDashboard, Files, Settings, 
+import {
+  LogOut, User, FolderPlus, Trash2, CheckSquare, Loader2,
+  AlertCircle, LayoutDashboard, Files, Settings,
   Menu, ChevronRight, ShieldAlert, ClipboardCopy,
-  ClipboardList, ImagePlus, Trash, ExternalLink, FileSpreadsheet
+  ClipboardList, ImagePlus, Trash, ExternalLink, FileSpreadsheet, Users
 } from 'lucide-react';
 import Auth from '../components/Auth';
 import Dashboard from '../components/Dashboard';
@@ -83,6 +83,15 @@ interface DeploySlide {
   created_at: string;
 }
 
+interface AdminUser {
+  id: string;
+  email: string | undefined;
+  created_at: string;
+  last_sign_in_at: string | null;
+  email_confirmed_at: string | null;
+  is_admin: boolean;
+}
+
 export default function Home() {
   const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -95,7 +104,7 @@ export default function Home() {
   const [activePhase, setActivePhase] = useState<string>('pre');
 
   // Navigation State
-  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'checklist_pm' | 'checklist_wbs' | 'checklist_a11y' | 'checklist_weekly' | 'deploy_slide' | 'documents' | 'settings'>('checklist_pm');
+  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'checklist_pm' | 'checklist_wbs' | 'checklist_a11y' | 'checklist_weekly' | 'deploy_slide' | 'documents' | 'settings' | 'admin_users'>('checklist_pm');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // WBS State
@@ -117,6 +126,11 @@ export default function Home() {
   const [slidesLoading, setSlidesLoading] = useState(false);
   const [deletingSlideId, setDeletingSlideId] = useState<string | null>(null);
   const [expandedA11yGroups, setExpandedA11yGroups] = useState<Record<string, boolean>>({});
+
+  // Admin State
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  const [updatingAdminId, setUpdatingAdminId] = useState<string | null>(null);
 
   // Global Statistics State
   const [globalStats, setGlobalStats] = useState<ProjectStat[]>([]);
@@ -197,6 +211,52 @@ export default function Home() {
       setGlobalStatsLoading(false);
     }
   }, []);
+
+  const fetchAdminUsers = useCallback(async () => {
+    if (!session?.access_token) return;
+    setAdminUsersLoading(true);
+    try {
+      const res = await fetch('/api/admin/users', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch users');
+      const data = await res.json();
+      setAdminUsers(data.users || []);
+    } catch (err: any) {
+      console.error('Error fetching admin users:', err.message);
+    } finally {
+      setAdminUsersLoading(false);
+    }
+  }, [session?.access_token]);
+
+  const handleToggleAdmin = useCallback(async (userId: string, currentIsAdmin: boolean) => {
+    if (!session?.access_token) return;
+    setUpdatingAdminId(userId);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId, is_admin: !currentIsAdmin }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || '권한 변경에 실패했습니다.');
+        return;
+      }
+      setAdminUsers(prev =>
+        prev.map(u => u.id === userId ? { ...u, is_admin: !currentIsAdmin } : u)
+      );
+      showToast(!currentIsAdmin ? '관리자 권한을 부여했습니다.' : '관리자 권한을 해제했습니다.');
+    } catch (err: any) {
+      showToast('권한 변경 중 오류가 발생했습니다.');
+      console.error('Error toggling admin:', err.message);
+    } finally {
+      setUpdatingAdminId(null);
+    }
+  }, [session?.access_token, showToast]);
 
   // 1. Auth Monitoring
   useEffect(() => {
@@ -531,6 +591,13 @@ export default function Home() {
       initializeA11yChecklist(activeProjectId);
     }
   }, [activeMenu, activeProjectId, initializeA11yChecklist]);
+
+  // Load admin users when entering admin menu
+  useEffect(() => {
+    if (activeMenu === 'admin_users') {
+      fetchAdminUsers();
+    }
+  }, [activeMenu, fetchAdminUsers]);
 
   // 5. Actions Handlers
   const handleLogout = async () => {
@@ -968,6 +1035,8 @@ ${docText}
     return <Auth onAuthSuccess={() => fetchProjects()} />;
   }
 
+  const isAdmin = session?.user?.user_metadata?.is_admin === true;
+
   return (
     <div className="min-h-screen flex bg-bg-primary text-text-main font-sans">
       
@@ -1105,6 +1174,32 @@ ${docText}
               </button>
             ))}
           </div>
+
+          {/* Admin Section — only visible to admin accounts */}
+          {isAdmin && (
+            <div className="space-y-0.5">
+              <div className="px-3 text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: '#c0c8d2' }}>
+                Admin
+              </div>
+              <button
+                onClick={() => { setActiveMenu('admin_users'); setIsSidebarOpen(false); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer"
+                style={activeMenu === 'admin_users'
+                  ? { backgroundColor: '#fff8e6', color: '#d97706', fontWeight: 600 }
+                  : { color: '#4e5968' }
+                }
+                onMouseEnter={(e) => {
+                  if (activeMenu !== 'admin_users') e.currentTarget.style.backgroundColor = '#f9fafb';
+                }}
+                onMouseLeave={(e) => {
+                  if (activeMenu !== 'admin_users') e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <Users className="w-4 h-4 shrink-0" />
+                회원 관리
+              </button>
+            </div>
+          )}
         </nav>
 
         {/* Sidebar Footer */}
@@ -1178,6 +1273,7 @@ ${docText}
                 {activeMenu === 'dashboard' && '통합 현황판'}
                 {activeMenu === 'documents' && '산출물 보관함'}
                 {activeMenu === 'settings' && '시스템 설정'}
+                {activeMenu === 'admin_users' && '회원 관리'}
               </span>
             </div>
           </div>
@@ -1447,6 +1543,21 @@ ${docText}
                       </div>
                     </div>
                     
+                    {/* Apps Script 동기화 안내 */}
+                    <div className="mb-6 p-4 rounded-xl bg-[#fffbeb] border border-[#fcd34d] text-left">
+                      <div className="flex items-start gap-2.5">
+                        <span className="text-[#d97706] text-sm shrink-0 mt-0.5">⚡</span>
+                        <div>
+                          <p className="text-xs font-bold text-[#92400e] mb-1">연동 후 데이터 동기화 방법</p>
+                          <p className="text-[11px] text-[#78350f] leading-relaxed">
+                            사본 시트를 등록한 후에도 <strong>데이터는 자동으로 반영되지 않습니다.</strong><br />
+                            구글 시트에서 데이터를 입력·수정한 뒤, 시트 상단 메뉴에서<br />
+                            <strong>[🔄 WBS 동기화] → [DB로 동기화 실행]</strong> 을 클릭하면 앱에 데이터가 전송됩니다.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* 템플릿 바로가기 카드 */}
                     <div className="mb-6 p-4 rounded-xl bg-[#f9fafb] border border-[#e5e8eb] text-left">
                       <div className="flex justify-between items-center gap-4">
@@ -1456,9 +1567,9 @@ ${docText}
                             버튼을 클릭하면 사본 생성 확인 페이지로 이동합니다. **[사본 만들기]** 버튼을 누르시면 본인의 구글 드라이브에 시트가 즉시 복제됩니다.
                           </p>
                         </div>
-                        <a 
-                          href={templateUri} 
-                          target="_blank" 
+                        <a
+                          href={templateUri}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="px-4 py-2 bg-[#3182f6] hover:bg-[#1b64da] text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer shrink-0"
                         >
@@ -1830,6 +1941,21 @@ ${docText}
                           </div>
                         </div>
                         
+                        {/* Apps Script 동기화 안내 */}
+                        <div className="mb-6 p-4 rounded-xl bg-[#fffbeb] border border-[#fcd34d] text-left">
+                          <div className="flex items-start gap-2.5">
+                            <span className="text-[#d97706] text-sm shrink-0 mt-0.5">⚡</span>
+                            <div>
+                              <p className="text-xs font-bold text-[#92400e] mb-1">연동 후 데이터 동기화 방법</p>
+                              <p className="text-[11px] text-[#78350f] leading-relaxed">
+                                사본 시트를 등록한 후에도 <strong>데이터는 자동으로 반영되지 않습니다.</strong><br />
+                                구글 시트에서 점검 결과를 입력·수정한 뒤, 시트 상단 메뉴에서<br />
+                                <strong>[🔄 접근성 동기화] → [DB로 접근성 동기화 실행]</strong> 을 클릭하면 앱에 데이터가 전송됩니다.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* 템플릿 바로가기 카드 */}
                         <div className="mb-6 p-4 rounded-xl bg-[#f9fafb] border border-[#e5e8eb] text-left">
                           <div className="flex justify-between items-center gap-4">
@@ -1839,9 +1965,9 @@ ${docText}
                                 버튼을 클릭하면 사본 생성 확인 페이지로 이동합니다. **[사본 만들기]** 버튼을 누르시면 본인의 구글 드라이브에 시트가 즉시 복제됩니다.
                               </p>
                             </div>
-                            <a 
-                              href={templateUri} 
-                              target="_blank" 
+                            <a
+                              href={templateUri}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="px-4 py-2 bg-[#3182f6] hover:bg-[#1b64da] text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer shrink-0"
                             >
@@ -2593,7 +2719,7 @@ ${docText}
               <div>
                 <h2 className="text-xl font-bold text-text-main font-heading">배포 슬라이드 자동 생성</h2>
                 <p className="text-xs text-text-muted mt-0.5">
-                  연동된 스프레드시트를 열어 데이터를 입력하고 슬라이드 생성을 실행하면 이력에 자동 누적됩니다.
+                  연동된 구글 시트의 &quot;배포리스트&quot; 탭에서 데이터를 가공한 후, 구글 시트 상단의 커스텀 메뉴를 클릭하여 주간 배포 슬라이드를 1초 만에 자동 생성합니다.
                 </p>
               </div>
 
@@ -2619,8 +2745,92 @@ ${docText}
                                 <div className="text-[#107c41] mb-3"><FileSpreadsheet className="w-8 h-8" /></div>
                                 <h4 className="font-bold text-[#191f28] mb-1.5 text-sm font-heading">배포 데이터 연동 스프레드시트</h4>
                                 <p className="text-xs text-[#4e5968] leading-relaxed mb-4">
-                                  웹접근성 점검리스트 탭에서 이미 연동을 완료한 구글 시트입니다. 해당 시트 내에 <strong>&quot;배포리스트&quot;</strong> 탭을 생성하고 규격에 맞춰 데이터를 입력하시면 배포 슬라이드를 바로 생성할 수 있습니다.
+                                  [웹접근성 점검리스트] 탭에서 등록한 구글 시트입니다. 해당 시트의 <strong className="text-[#107c41]">&quot;배포리스트&quot;</strong> 탭에 기록된 수정 내역과 캡처 이미지를 바탕으로 구글 프레젠테이션(슬라이드)이 자동 생성됩니다.
                                 </p>
+                                
+                                {/* 실행 절차 요약 안내 */}
+                                <div className="mb-4 p-3.5 rounded-xl bg-[#f6f8fa] border border-[#e1e4e6] text-left space-y-2">
+                                  <p className="text-[11px] font-bold text-[#191f28]">💡 슬라이드 생성 4단계 흐름</p>
+                                  <ol className="text-[10px] text-[#4e5968] space-y-1.5 list-decimal pl-3.5">
+                                    <li>
+                                      아래 <strong>[구글 시트 열기]</strong>를 눌러 연동 시트로 이동합니다.
+                                    </li>
+                                    <li>
+                                      시트 내 <strong>&quot;배포리스트&quot;</strong> 탭에 규격(A~I열)대로 배포 수정 내역을 입력합니다. (이미지 증빙은 <code>삽입 ➡ 셀에 이미지 삽입</code> 메뉴 필수)
+                                    </li>
+                                    <li>
+                                      스프레드시트 상단 메뉴바의 <strong>[🔄 WBS/접근성 동기화] ➡ [배포 슬라이드 생성]</strong>을 클릭하여 실행합니다.
+                                    </li>
+                                    <li>
+                                      Apps Script가 구글 드라이브에 슬라이드를 생성하며, 본 웹 앱의 하단 <strong>[생성 이력]</strong> 목록에 실시간 누적됩니다.
+                                    </li>
+                                  </ol>
+                                </div>
+
+                                {/* 컬럼 규격 안내 접이식 아코디언 */}
+                                <details className="mb-4 text-left border border-[#e5e8eb] rounded-xl overflow-hidden bg-white">
+                                  <summary className="p-3 text-[11px] font-semibold text-[#191f28] hover:bg-[#f9fafb] cursor-pointer flex justify-between items-center select-none">
+                                    <span>📋 배포리스트 시트 컬럼 규격 안내 (A~I열)</span>
+                                  </summary>
+                                  <div className="p-3 border-t border-[#e5e8eb] bg-[#f9fafb] text-[10px] text-[#4e5968] overflow-x-auto">
+                                    <table className="w-full text-left border-collapse min-w-[450px]">
+                                      <thead>
+                                        <tr className="border-b border-[#e5e8eb]">
+                                          <th className="pb-1 font-bold w-12 text-[#191f28]">열</th>
+                                          <th className="pb-1 font-bold w-16 text-[#191f28]">항목명</th>
+                                          <th className="pb-1 font-bold text-[#191f28]">작성 규칙 및 필수값 여부</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-[#e5e8eb]/60">
+                                        <tr>
+                                          <td className="py-1.5 font-semibold text-[#3182f6]">A열</td>
+                                          <td className="py-1.5 font-medium text-[#191f28]">선택</td>
+                                          <td className="py-1.5 text-[#4e5968]">체크박스 (체크된 항목만 슬라이드에 반영)</td>
+                                        </tr>
+                                        <tr>
+                                          <td className="py-1.5 font-semibold text-[#3182f6]">B열</td>
+                                          <td className="py-1.5 font-medium text-[#191f28]">No</td>
+                                          <td className="py-1.5 text-[#4e5968]">슬라이드 번호 및 순서 (숫자)</td>
+                                        </tr>
+                                        <tr>
+                                          <td className="py-1.5 font-semibold text-[#3182f6]">C열</td>
+                                          <td className="py-1.5 font-medium text-[#191f28]">분류</td>
+                                          <td className="py-1.5 text-[#4e5968]">수정 메뉴/위치 (예: 공통, 메인)</td>
+                                        </tr>
+                                        <tr>
+                                          <td className="py-1.5 font-semibold text-[#3182f6]">D열</td>
+                                          <td className="py-1.5 font-medium text-[#191f28]">수정내용</td>
+                                          <td className="py-1.5 text-[#4e5968]">상세 수정 내역 (상세 페이지 중앙 텍스트)</td>
+                                        </tr>
+                                        <tr>
+                                          <td className="py-1.5 font-semibold text-[#3182f6]">E열</td>
+                                          <td className="py-1.5 font-medium text-[#191f28]">작업자</td>
+                                          <td className="py-1.5 text-[#4e5968]">수정한 담당자 이름</td>
+                                        </tr>
+                                        <tr>
+                                          <td className="py-1.5 font-semibold text-[#3182f6]">F열</td>
+                                          <td className="py-1.5 font-medium text-[#191f28]">URL</td>
+                                          <td className="py-1.5 text-[#4e5968]">해당 화면의 전체 웹 주소 (새 창 이동 연결용)</td>
+                                        </tr>
+                                        <tr>
+                                          <td className="py-1.5 font-semibold text-[#3182f6]">G열</td>
+                                          <td className="py-1.5 font-medium text-[#191f28]">이미지</td>
+                                          <td className="py-1.5 text-[#e04452] font-semibold">셀 안에 이미지 삽입 기능으로 스크린샷을 넣어주세요. (셀 위 삽입 X)</td>
+                                        </tr>
+                                        <tr>
+                                          <td className="py-1.5 font-semibold text-[#3182f6]">H열</td>
+                                          <td className="py-1.5 font-medium text-[#191f28]">이미지 URL</td>
+                                          <td className="py-1.5 text-[#8b95a1]">스크립트가 이미지 자동 추출 후 기입하는 영역 (직접 작성 X)</td>
+                                        </tr>
+                                        <tr>
+                                          <td className="py-1.5 font-semibold text-[#3182f6]">I열</td>
+                                          <td className="py-1.5 font-medium text-[#191f28]">주석명</td>
+                                          <td className="py-1.5 text-[#4e5968]">상세 슬라이드 페이지 하단에 표기할 추가 조치/설명</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </details>
                               </div>
                               <a 
                                 href={a11ySheetUrl} 
@@ -3019,6 +3229,165 @@ ${docText}
                     </span>
                   </div>
                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* ========================================================
+              ADMIN: USER MANAGEMENT PAGE
+             ======================================================== */}
+          {activeMenu === 'admin_users' && isAdmin && (
+            <section className="space-y-6 animate-fade-in max-w-4xl">
+              <div>
+                <h2 className="text-xl font-bold text-text-main font-heading">회원 관리</h2>
+                <p className="text-xs text-text-muted mt-0.5">가입된 모든 사용자 계정을 조회합니다. (관리자 전용)</p>
+              </div>
+
+              {/* Admin badge */}
+              <div
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold"
+                style={{ backgroundColor: '#fff8e6', color: '#d97706', border: '1px solid #fde68a' }}
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                관리자 계정으로 로그인됨
+              </div>
+
+              {/* Users Table */}
+              <div className="bg-bg-secondary border border-border-color rounded-md overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-border-color flex items-center justify-between">
+                  <h3 className="text-sm font-bold">전체 가입 회원 목록</h3>
+                  <button
+                    onClick={fetchAdminUsers}
+                    className="text-xs font-semibold transition-colors"
+                    style={{ color: '#3182f6' }}
+                  >
+                    새로고침
+                  </button>
+                </div>
+
+                {adminUsersLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#3182f6' }} />
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr style={{ backgroundColor: '#f9fafb' }}>
+                          <th className="px-4 py-3 text-left font-bold text-text-muted">이메일</th>
+                          <th className="px-4 py-3 text-left font-bold text-text-muted">가입일</th>
+                          <th className="px-4 py-3 text-left font-bold text-text-muted">최근 로그인</th>
+                          <th className="px-4 py-3 text-center font-bold text-text-muted">이메일 인증</th>
+                          <th className="px-4 py-3 text-center font-bold text-text-muted">권한</th>
+                          <th className="px-4 py-3 text-center font-bold text-text-muted">관리</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adminUsers.map((u) => {
+                          const isSelf = u.email === session.user.email;
+                          const isUpdating = updatingAdminId === u.id;
+                          return (
+                          <tr
+                            key={u.id}
+                            className="border-t border-border-color/40 hover:bg-bg-primary transition-colors"
+                          >
+                            <td className="px-4 py-3 font-medium text-text-main">
+                              {u.email || '-'}
+                              {isSelf && (
+                                <span
+                                  className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded font-bold"
+                                  style={{ backgroundColor: '#eff6ff', color: '#3182f6' }}
+                                >
+                                  나
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-text-muted">
+                              {u.created_at ? new Date(u.created_at).toLocaleDateString('ko-KR') : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-text-muted">
+                              {u.last_sign_in_at
+                                ? new Date(u.last_sign_in_at).toLocaleDateString('ko-KR')
+                                : '없음'}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className="px-2 py-1 rounded text-[10px] font-bold"
+                                style={u.email_confirmed_at
+                                  ? { backgroundColor: '#e8f9f6', color: '#00b493' }
+                                  : { backgroundColor: '#fff2f3', color: '#f04452' }
+                                }
+                              >
+                                {u.email_confirmed_at ? '인증됨' : '미인증'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {u.is_admin ? (
+                                <span
+                                  className="px-2 py-1 rounded text-[10px] font-bold"
+                                  style={{ backgroundColor: '#fff8e6', color: '#d97706' }}
+                                >
+                                  관리자
+                                </span>
+                              ) : (
+                                <span className="text-text-muted text-[11px]">일반</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {isSelf ? (
+                                <span className="text-[11px] text-text-muted">-</span>
+                              ) : (
+                                <button
+                                  onClick={() => handleToggleAdmin(u.id, u.is_admin)}
+                                  disabled={isUpdating}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                  style={u.is_admin
+                                    ? { borderColor: '#fde68a', color: '#d97706', backgroundColor: '#fffbeb' }
+                                    : { borderColor: '#e5e8eb', color: '#4e5968', backgroundColor: '#f9fafb' }
+                                  }
+                                  onMouseEnter={(e) => {
+                                    if (!isUpdating) e.currentTarget.style.backgroundColor = u.is_admin ? '#fef3c7' : '#f2f4f6';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!isUpdating) e.currentTarget.style.backgroundColor = u.is_admin ? '#fffbeb' : '#f9fafb';
+                                  }}
+                                >
+                                  {isUpdating
+                                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                                    : u.is_admin ? '관리자 해제' : '관리자 지정'
+                                  }
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                          );
+                        })}
+                        {adminUsers.length === 0 && (
+                          <tr>
+                            <td colSpan={6} className="px-4 py-10 text-center text-text-muted">
+                              가입된 회원이 없습니다.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div className="px-5 py-2.5 border-t border-border-color/40 text-[11px] text-text-muted">
+                  총 {adminUsers.length}명
+                </div>
+              </div>
+
+              {/* Notice */}
+              <div className="rounded-xl px-4 py-3 text-[11px] flex items-start gap-2"
+                style={{ backgroundColor: '#fff8e6', color: '#92400e' }}
+              >
+                <ShieldAlert className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                <span>
+                  권한 변경은 즉시 DB에 저장됩니다. 단, 변경 대상 계정은 <strong>로그아웃 후 재로그인</strong>해야 새 권한이 적용됩니다.
+                  자신의 계정은 관리자 해제가 불가능합니다.
+                </span>
               </div>
             </section>
           )}
