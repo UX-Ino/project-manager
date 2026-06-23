@@ -19,16 +19,47 @@ describe('ProjectModal Component', () => {
     
     expect(screen.getByText('새 프로젝트 추가')).toBeInTheDocument();
     
-    const input = screen.getByLabelText('프로젝트명');
-    fireEvent.change(input, { target: { value: 'New Project' } });
+    const nameInput = screen.getByLabelText('프로젝트명');
+    fireEvent.change(nameInput, { target: { value: 'New Project' } });
+
+    const slugInput = screen.getByLabelText(/영문 식별자/);
+    fireEvent.change(slugInput, { target: { value: 'new-project' } });
     
     const submitBtn = screen.getByRole('button', { name: '프로젝트 생성 & 기본데이터 주입' });
     fireEvent.click(submitBtn);
     
     await waitFor(() => {
-      expect(mockOnSubmit).toHaveBeenCalledWith('New Project');
+      expect(mockOnSubmit).toHaveBeenCalledWith('New Project', 'new-project');
       expect(mockOnClose).toHaveBeenCalled();
     });
+  });
+
+  it('validates against duplicate project names', async () => {
+    const mockOnSubmit = vi.fn().mockResolvedValue(undefined);
+    const mockOnClose = vi.fn();
+    const existingNames = ['Duplicate Project', 'Other Project'];
+
+    render(
+      <ProjectModal 
+        isOpen={true} 
+        onClose={mockOnClose} 
+        onSubmit={mockOnSubmit} 
+        existingNames={existingNames} 
+      />
+    );
+
+    const nameInput = screen.getByLabelText('프로젝트명');
+    fireEvent.change(nameInput, { target: { value: 'Duplicate Project' } });
+
+    const slugInput = screen.getByLabelText(/영문 식별자/);
+    fireEvent.change(slugInput, { target: { value: 'unique-slug' } });
+
+    const submitBtn = screen.getByRole('button', { name: '프로젝트 생성 & 기본데이터 주입' });
+    fireEvent.click(submitBtn);
+
+    expect(screen.getByText('이미 존재하는 프로젝트 이름입니다. 다른 이름을 입력해주세요.')).toBeInTheDocument();
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+    expect(mockOnClose).not.toHaveBeenCalled();
   });
 });
 

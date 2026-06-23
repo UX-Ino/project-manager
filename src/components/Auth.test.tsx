@@ -101,7 +101,11 @@ describe('Auth Component', () => {
     fireEvent.change(screen.getByPlaceholderText('name@etribe.co.kr'), {
       target: { value: 'test@gmail.com' },
     });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+    const passwordInputs = screen.getAllByPlaceholderText('••••••••');
+    fireEvent.change(passwordInputs[0], {
+      target: { value: 'password123' },
+    });
+    fireEvent.change(passwordInputs[1], {
       target: { value: 'password123' },
     });
 
@@ -127,7 +131,11 @@ describe('Auth Component', () => {
     fireEvent.change(screen.getByPlaceholderText('name@etribe.co.kr'), {
       target: { value: 'newuser@etribe.co.kr' },
     });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+    const passwordInputs = screen.getAllByPlaceholderText('••••••••');
+    fireEvent.change(passwordInputs[0], {
+      target: { value: 'password123' },
+    });
+    fireEvent.change(passwordInputs[1], {
       target: { value: 'password123' },
     });
 

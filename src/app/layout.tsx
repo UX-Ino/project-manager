@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Outfit } from "next/font/google";
+import { Inter, Outfit, Geist } from "next/font/google";
 import "./globals.css";
+import ClientLayout from "../components/ClientLayout";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -25,10 +29,10 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${inter.variable} ${outfit.variable} h-full antialiased`}
+      className={cn("h-full", "antialiased", inter.variable, outfit.variable, "font-sans", geist.variable)}
     >
       <body className="min-h-full flex flex-col bg-bg-primary text-text-main font-sans">
-        {children}
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

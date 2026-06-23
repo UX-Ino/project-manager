@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, FolderPlus, Plus, Calendar, User, Tag } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 // Shared input style helper
 const inputStyle: React.CSSProperties = {
@@ -16,21 +17,66 @@ const inputStyle: React.CSSProperties = {
 interface ProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string) => Promise<void>;
+  onSubmit: (name: string, slug: string) => Promise<void>;
+  existingSlugs?: string[];
+  existingNames?: string[];
 }
 
-export function ProjectModal({ isOpen, onClose, onSubmit }: ProjectModalProps) {
+export function ProjectModal({ isOpen, onClose, onSubmit, existingSlugs = [], existingNames = [] }: ProjectModalProps) {
   const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [slugError, setSlugError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
+  const validateSlug = (val: string) => {
+    if (!val) {
+      return '영문 식별자(Slug)를 입력해주세요.';
+    }
+    const regex = /^[a-z0-9-]+$/;
+    if (!regex.test(val)) {
+      return '영문 소문자, 숫자, 하이픈(-)만 입력할 수 있습니다.';
+    }
+    if (existingSlugs.includes(val.trim().toLowerCase())) {
+      return '이미 존재하는 식별자입니다.';
+    }
+    return '';
+  };
+
+  const handleSlugChange = (val: string) => {
+    const cleaned = val.toLowerCase().replace(/\s+/g, '-');
+    setSlug(cleaned);
+    if (slugError) {
+      setSlugError('');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+    
+    // Validate project name
+    const cleanedName = name.trim().toLowerCase();
+    if (existingNames.some(n => n.trim().toLowerCase() === cleanedName)) {
+      setNameError('이미 존재하는 프로젝트 이름입니다. 다른 이름을 입력해주세요.');
+      return;
+    }
+
+    const err = validateSlug(slug);
+    if (err) {
+      setSlugError(err);
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await onSubmit(name);
+      await onSubmit(name.trim(), slug.trim().toLowerCase());
+      setName('');
+      setSlug('');
+      setNameError('');
+      setSlugError('');
       onClose();
     } catch (err) {
       console.error(err);
@@ -40,22 +86,23 @@ export function ProjectModal({ isOpen, onClose, onSubmit }: ProjectModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 z-50 animate-fade-in"
-      style={{ backgroundColor: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
-    >
-      <div
-        className="w-full max-w-[460px] rounded-2xl overflow-hidden animate-fade-in-down"
-        style={{ backgroundColor: '#ffffff', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent 
+        className="w-full max-w-[460px] sm:max-w-[460px] rounded-2xl overflow-hidden p-0 gap-0 border-none bg-white shadow-2xl animate-fade-in-down"
+        showCloseButton={false}
       >
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-5" style={{ borderBottom: '1px solid #f2f4f6' }}>
-          <h2 className="text-base font-bold flex items-center gap-2.5" style={{ color: '#191f28' }}>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#eff6ff' }}>
-              <FolderPlus className="w-3.5 h-3.5" style={{ color: '#3182f6' }} />
-            </div>
-            새 프로젝트 추가
-          </h2>
+          <DialogTitle asChild>
+            <h2 className="text-base font-bold flex items-center gap-2.5" style={{ color: '#191f28' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#eff6ff' }}>
+                <FolderPlus className="w-3.5 h-3.5" style={{ color: '#3182f6' }} />
+              </div>
+              새 프로젝트 추가
+            </h2>
+          </DialogTitle>
           <button
+            type="button"
             onClick={onClose}
             className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
             style={{ color: '#8b95a1' }}
@@ -78,13 +125,51 @@ export function ProjectModal({ isOpen, onClose, onSubmit }: ProjectModalProps) {
                 id="new-project-name"
                 required
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (nameError) setNameError('');
+                }}
                 placeholder="예: 롯데잇츠 웹 접근성"
                 className="w-full px-4 py-2.5 rounded-xl text-sm transition-all"
-                style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = '#3182f6')}
-                onBlur={(e) => (e.target.style.borderColor = '#e5e8eb')}
+                style={{
+                  ...inputStyle,
+                  borderColor: nameError ? '#f04438' : '#e5e8eb'
+                }}
+                onFocus={(e) => (e.target.style.borderColor = nameError ? '#f04438' : '#3182f6')}
+                onBlur={(e) => (e.target.style.borderColor = nameError ? '#f04438' : '#e5e8eb')}
               />
+              {nameError && (
+                <p className="text-xs font-medium mt-1" style={{ color: '#f04438' }}>{nameError}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="new-project-slug" className="block text-xs font-semibold flex justify-between" style={{ color: '#4e5968' }}>
+                <span>영문 식별자 (Slug)</span>
+                <span className="text-[10px] font-normal" style={{ color: '#8b95a1' }}>주소창 경로로 사용됩니다.</span>
+              </label>
+              <input
+                type="text"
+                id="new-project-slug"
+                required
+                value={slug}
+                onChange={(e) => handleSlugChange(e.target.value)}
+                placeholder="예: lotte-its"
+                className="w-full px-4 py-2.5 rounded-xl text-sm transition-all"
+                style={{
+                  ...inputStyle,
+                  borderColor: slugError ? '#f04438' : '#e5e8eb'
+                }}
+                onFocus={(e) => (e.target.style.borderColor = slugError ? '#f04438' : '#3182f6')}
+                onBlur={(e) => (e.target.style.borderColor = slugError ? '#f04438' : '#e5e8eb')}
+              />
+              {slugError ? (
+                <p className="text-xs font-medium mt-1" style={{ color: '#f04438' }}>{slugError}</p>
+              ) : slug ? (
+                <p className="text-[11px] mt-1" style={{ color: '#4e5968' }}>
+                  미리보기: <span className="font-semibold text-blue-600">/projects/{slug}/checklist</span>
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -115,8 +200,8 @@ export function ProjectModal({ isOpen, onClose, onSubmit }: ProjectModalProps) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -167,23 +252,23 @@ export function ItemModal({ isOpen, onClose, onSubmit, item, defaultGroup }: Ite
   const fieldClass = 'w-full px-4 py-2.5 rounded-xl text-sm transition-all';
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center p-4 z-50 animate-fade-in"
-      style={{ backgroundColor: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
-    >
-      <div
-        className="w-full max-w-[500px] rounded-2xl overflow-hidden animate-fade-in-down"
-        style={{ backgroundColor: '#ffffff', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent 
+        className="w-full max-w-[500px] sm:max-w-[500px] rounded-2xl overflow-hidden p-0 gap-0 border-none bg-white shadow-2xl animate-fade-in-down"
+        showCloseButton={false}
       >
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-5" style={{ borderBottom: '1px solid #f2f4f6' }}>
-          <h2 className="text-base font-bold flex items-center gap-2.5" style={{ color: '#191f28' }}>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#eff6ff' }}>
-              <Plus className="w-3.5 h-3.5" style={{ color: '#3182f6' }} />
-            </div>
-            {item ? '체크리스트 항목 수정' : '체크리스트 항목 추가'}
-          </h2>
+          <DialogTitle asChild>
+            <h2 className="text-base font-bold flex items-center gap-2.5" style={{ color: '#191f28' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#eff6ff' }}>
+                <Plus className="w-3.5 h-3.5" style={{ color: '#3182f6' }} />
+              </div>
+              {item ? '체크리스트 항목 수정' : '체크리스트 항목 추가'}
+            </h2>
+          </DialogTitle>
           <button
+            type="button"
             onClick={onClose}
             className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
             style={{ color: '#8b95a1' }}
@@ -319,8 +404,8 @@ export function ItemModal({ isOpen, onClose, onSubmit, item, defaultGroup }: Ite
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -337,29 +422,32 @@ export function ImageViewerModal({ isOpen, imageUrl, onClose }: ImageViewerModal
   if (!isOpen || !imageUrl) return null;
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 flex items-center justify-center p-4 z-55 animate-fade-in cursor-zoom-out"
-      style={{ backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
-    >
-      <div className="relative max-w-4xl max-h-[85vh] w-full h-full flex items-center justify-center">
-        <button
-          onClick={(e) => { e.stopPropagation(); onClose(); }}
-          className="absolute -top-10 right-0 text-white p-2 cursor-pointer rounded-full transition-colors"
-          style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)')}
-        >
-          <X className="w-5 h-5" />
-        </button>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl}
-          alt="첨부 이미지 원본"
-          onClick={(e) => e.stopPropagation()}
-          className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl cursor-default"
-        />
-      </div>
-    </div>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent 
+        className="max-w-4xl max-h-[85vh] w-full h-full border-none bg-transparent p-0 gap-0 shadow-none flex items-center justify-center z-[60]"
+        overlayClassName="bg-black/85 backdrop-blur-[8px] z-[60]"
+        showCloseButton={false}
+      >
+        <DialogTitle className="sr-only">이미지 뷰어</DialogTitle>
+        <div className="relative w-full h-full flex items-center justify-center cursor-zoom-out" onClick={onClose}>
+          <button
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            className="absolute -top-10 right-0 text-white p-2 cursor-pointer rounded-full transition-colors"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)')}
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt="첨부 이미지 원본"
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl cursor-default"
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

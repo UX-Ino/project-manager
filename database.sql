@@ -2,6 +2,7 @@
 create table if not exists projects (
   id             uuid primary key default gen_random_uuid(),
   name           text not null,
+  slug           text unique not null,
   wbs_sheet_url  text,
   a11y_sheet_url text,
   created_at     timestamptz default now()
@@ -44,14 +45,14 @@ create policy "Allow authenticated users on checklist"
   with check (true);
 
 -- 5. 기본 체크리스트 자동 삽입을 위한 RPC 함수 정의
-create or replace function create_project_with_defaults(project_name text)
+create or replace function create_project_with_defaults(project_name text, project_slug text)
 returns uuid as $$
 declare
   new_project_id uuid;
 begin
   -- 1. 프로젝트 생성 및 ID 반환
-  insert into projects (name)
-  values (project_name)
+  insert into projects (name, slug)
+  values (project_name, lower(trim(project_slug)))
   returning id into new_project_id;
 
   -- 2. 해당 프로젝트에 대한 기본 체크리스트 데이터 삽입 (기획서 9항 기준)

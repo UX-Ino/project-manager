@@ -25,6 +25,7 @@
 | 3단계: UI 컴포넌트 개발 | ✅ 완료 | 100% |
 | 4단계: 기능 구현 | ✅ 완료 | 100% |
 | 5단계: 테스트 및 배포 | ✅ 완료 | 100% |
+| 6단계: UI 고도화 (shadcn/ui) | ✅ 완료 | 100% |
 | **전체** | **개발 완료** | **100%** |
 
 ---
@@ -35,7 +36,8 @@
 project-manager/
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx          ← 메인 앱 (2100+ 줄, 모든 UI/로직 포함)
+│   │   ├── projects/[slug]/  ← 개별 프로젝트 서브 라우트
+│   │   ├── page.tsx          ← 메인 앱 (통합 대시보드)
 │   │   └── globals.css       ← CSS 변수 및 전역 스타일
 │   ├── components/
 │   │   ├── Auth.tsx          ← 로그인/회원가입 컴포넌트
@@ -199,6 +201,12 @@ WBS_SYNC_SECRET=...             # openssl rand -hex 32 로 생성
 - [x] 빌드 컴파일 검증 및 ESLint 해결
 - [x] **Vercel 배포 완료 및 최종 동작 테스트**
 
+### 6단계: UI 고도화 - shadcn/ui 도입 및 리팩토링 (✅ 완료)
+- [x] shadcn/ui CLI 초기화 및 Radix/Nova 프리셋 의존성 설치
+- [x] globals.css Tailwind v4 테마 변수 및 키프레임 애니메이션 수동 병합 복원
+- [x] ProjectModal, ItemModal, ImageViewerModal을 shadcn Dialog 컴포넌트로 리팩토링 및 포털 최적화
+- [x] cascading render ESLint 오류 제거 및 31개 테스트/Next.js 프로덕션 빌드 무결성 확인
+
 ---
 
 ## 📅 업데이트 이력
@@ -222,3 +230,20 @@ WBS_SYNC_SECRET=...             # openssl rand -hex 32 로 생성
 - **2026-06-19**: 회원가입 시 비밀번호 확인용 필드(`confirmPassword`)를 추가하여 입력 불일치 시 차단 기능 구현. 가입 완료 시 이메일 인증 안내 alert 창 연동. 깃허브 배포 동기화 완료 및 Supabase Localhost 리다이렉션 에러 원인 및 해결 가이드 작성.
 - **2026-06-19**: WBS 및 접근성 점검표의 구글 시트 연동 절차를 3단계(사본 생성 -> URL 복사 -> 등록) 비주얼 가이드로 UI 보완 및 보안 한계점 대응 기술 설명 작성.
 - **2026-06-22**: 배포 슬라이드 탭 내의 자동 생성 절차(4단계 요약 가이드) 및 스프레드시트 배포리스트 탭 작성용 컬럼 규격 안내(A~I열 아코디언 표)를 상세히 보완하여 사용성 개편 완료.
+- **2026-06-22**: Next.js App Router 물리적 폴더 기반 nested/dynamic 라우팅 구조 개편 완료. `projects/[id]/a11y`, `projects/[id]/weekly`, `projects/[id]/deploy-slides`, `projects/[id]/documents` 개별 프로젝트 탭 및 전역 `/settings`, `/admin` 단독 페이지 이식 완료. `page.tsx` 대시보드 리팩토링 및 31개 Vitest 유닛 테스트와 Next.js optimized production build 모두 성공적으로 검증 완료.
+- **2026-06-22**: UUID 기반의 프로젝트 URL 구조를 영문 식별자 기반의 직관적인 경로(/projects/[slug]/...)로 개편 완료. projects 테이블에 slug 컬럼 및 UNIQUE 제약 추가, 새 프로젝트 생성 모달(ProjectModal) 내 영문 식별자 입력 필드 및 정규식 검증 추가. Sidebar, Header, page.tsx(대시보드) 라우팅 링크를 영문 슬러그로 변경. 서브 페이지(checklist, wbs, a11y, weekly, deploy-slides, documents)에서 slug를 통해 UUID projectId 매핑 쿼리 처리 완료. Vitest 유닛 테스트 수정 및 31개 전체 테스트 통과 검증 완료.
+- **2026-06-22**: 모든 모달 컴포넌트(ProjectModal, ItemModal, ImageViewerModal)에 React Portal(createPortal)과 mounted 마운트 체크 방어 로직을 전면 탑재하여, 부모 요소의 CSS 레이아웃 제약에 의해 딤(dim) 배경과 모달 팝업 위치가 부분 영역 내에 갇히거나 깨지던 UI 렌더링 오동작을 완벽하게 예방 및 해결 완료.
+- **2026-06-22**: 사이드바(Sidebar.tsx)의 '통합 현황판' 링크를 무조건 홈(루트 '/')으로 연동되도록 수정하고 하이라이트 활성화 조건문을 개선하여, 프로젝트 상세 관리 서브 페이지로 이동한 뒤에도 언제든지 홈으로 원활히 복귀할 수 있도록 교정 완료.
+- **2026-06-22**: 프로젝트 미선택 시(통합 현황판 등) 사이드바에서 '프로젝트 체크리스트' 및 '산출물 보관함' 탭을 자동으로 숨기고, 상단 헤더 등을 통해 프로젝트를 선택했을 때만 사이드바에 나타나도록 조건부 렌더링을 적용하여 UI/UX 동선을 최적화함.
+- **2026-06-22**: 프로젝트에 shadcn/ui(Radix / Nova 프리셋)를 도입하고, globals.css 테마 변수 병합 및 기존 커스텀 모달 컴포넌트(ProjectModal, ItemModal, ImageViewerModal)를 shadcn Dialog 표준 컴포넌트로 마이그레이션 완료. cascading render ESLint 오류 해결을 위해 불필요한 mounted 상태 및 useEffect 제거 후 ESLint, 31개 단위 테스트 및 Next.js optimized production build 검증 완수.
+- **2026-06-22**: 웹 접근성 대시보드의 '메뉴 Depth별 세부 조치 현황' 아코디언 및 내부 항목의 기본 정렬 기준을 구글 스프레드시트 수집 순서(sort_order 오름차순)로 변경하고, 사용자가 화면에서 실시간으로 정렬 기준(구글 시트 순서 vs 조치 시급 순)을 직접 전환할 수 있도록 셀렉트 박스 필터 컴포넌트를 UI에 탑재 완료.
+- **2026-06-22**: 새 프로젝트 추가 모달(ProjectModal) 및 호출부(Header.tsx, page.tsx)에 중복 프로젝트명 검증용 existingNames 프로퍼티와 프론트엔드 유효성 검사 로직을 탑재하여, 기존 생성된 프로젝트명과 대소문자/공백 무시 기준 일치 시 '이미 존재하는 프로젝트 이름입니다...' 에러 노출 및 생성을 방지하도록 보완 완료.
+- **2026-06-22**: 프로젝트 내 백엔드 API 명세(/api/wbs-sync, /api/a11y-sync, /api/deploy-slide-sync, /api/admin/users)를 제공하는 Swagger UI 문서 페이지(/api-docs)를 신규 개설하고, 개발자들의 원활한 확인을 돕기 위해 비로그인 상태에서도 접근이 가능하도록 ClientLayout 라우팅 게이트웨이 예외 처리를 반영 완료.
+- **2026-06-22**: ClientLayout(AppShell) 내 authLoading early return 이후에 usePathname 훅이 호출되어 발생하던 React Rules of Hooks 순서 위반 오류(change in Hook order)를 훅 선언부 최상단 이동 처리를 통해 교정 완료.
+- **2026-06-22**: WBS 구글 시트 동기화 시 Trailing Slash(/) 입력으로 인해 POST 요청이 GET 상태 체크 API로 308 리다이렉트되어 [HTTP 200] 알 수 없는 오류가 발생하던 이슈 분석 및 가이드 제공.
+- **2026-06-22**: WBS 화면의 세 번째 탭을 '전체 일정 (Gantt)'으로 개편하고, 2단 시간축(월/주차), 현재선(Today Line), 마일스톤 수직 점선(★), 실제 진척도가 채워지는 가로형 태스크 바 및 말풍선 툴팁이 모두 연동된 종합 간트 차트 뷰 전면 구현 완료 (단위 테스트 32개 및 프로덕션 빌드 검증 성공).
+- **2026-06-22**: WBS 간트 차트 가독성 증진을 위한 표기 레벨 제한(Level 3 이하만 노출) 및 실제 일정 제외 오직 계획 일정(`plan_start`, `plan_end`) 및 계획 진척율(`plan_progress`) 기준 렌더링 세부 필터 보완 완료.
+- **2026-06-22**: 간트 차트 3가지 렌더링 버그 수정 완료. (1) 현재선·마일스톤이 태스크 바 뒤에 깔리던 z-index 문제 해결 — 오버레이 div(z-20)로 분리하여 항상 위에 표시. (2) `calc(260px + percent%)` 위치 계산 오류 수정 — 오버레이를 `left: 260px`부터 시작해 태스크 바의 left% 기준과 1:1 일치하도록 개편. (3) Phase(착수/진단/수정/심사/완료) Level 1 행에 직접 날짜가 없을 때 하위 태스크의 min/max 날짜로 자동 계산하는 `phasesComputed` 로직 추가.
+- **2026-06-23**: 로컬 네트워크에서 HMR WebSocket 접속 시 연결 실패하는 오류 해결을 위해 `next.config.ts` 파일의 `allowedDevOrigins` 설정에 `192.168.20.42`를 명시적으로 등록하고, Node.js `os` 모듈을 이용해 서버의 활성 IPv4 주소들을 자동으로 수집하여 추가되도록 동적 IP 매핑 로직을 구현함.
+
+
