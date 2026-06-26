@@ -424,7 +424,7 @@ function _duplicateSlide(pres, templateSlide, baseIdx, count) {
 // ⚙️ ACCESSIBILITY CONFIG
 var A11Y_CONFIG = {
   // 배포된 앱 API 주소 또는 터널 주소
-  API_ENDPOINT: "https://untrepanned-skyler-unforcible.ngrok-free.dev/api/a11y-sync",
+  API_ENDPOINT: "https://project-manager-topaz-omega.vercel.app/api/a11y-sync",
 
   // .env.local 의 WBS_SYNC_SECRET 값
   SYNC_SECRET:

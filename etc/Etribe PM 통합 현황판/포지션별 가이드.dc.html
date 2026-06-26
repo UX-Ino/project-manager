@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d5dae3; border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</helmet>
+<div style="display:flex; height:100vh; min-height:760px; background:#f4f6fa; color:#1a2233; overflow:hidden;">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside style="width:248px; flex-shrink:0; background:#ffffff; border-right:1px solid #e8ecf3; display:flex; flex-direction:column; overflow-y:auto;">
+    <div style="display:flex; align-items:center; gap:11px; padding:20px 20px 18px;">
+      <div style="width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,#3b82f6,#2563eb); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(37,99,235,.28);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8 12l3 3 5-6"/></svg>
+      </div>
+      <div style="line-height:1.25;">
+        <div style="font-size:16px; font-weight:800; letter-spacing:-.02em; color:#101727;">Etribe PM</div>
+        <div style="font-size:11px; color:#8a93a6; font-weight:500;">웹 접근성 PM 툴</div>
+      </div>
+    </div>
+
+    <nav style="padding:6px 12px 24px; display:flex; flex-direction:column; gap:2px;">
+      <a href="통합 현황판.dc.html" style="display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; color:#4a5468; font-size:14px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        통합 현황판
+      </a>
+
+      <div style="font-size:10.5px; font-weight:700; letter-spacing:.08em; color:#a3abbb; padding:16px 12px 6px;">CHECKLIST &amp; WBS</div>
+
+      <a href="#" onClick="{{ noop }}" style="display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; background:#f5f8ff; color:#2f6bed; font-size:14px; font-weight:700; text-decoration:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M9 3.5h6V6H9z" fill="currentColor" stroke="none"/><path d="M9 11h6M9 15h4"/></svg>
+        프로젝트 체크리스트
+      </a>
+
+      <div style="display:flex; flex-direction:column; gap:1px; padding:2px 0 2px 18px;">
+        <a href="#" onClick="{{ noop }}" style="display:block; padding:8px 12px; border-radius:8px; background:#eef4ff; color:#2563eb; font-size:13.5px; font-weight:700; text-decoration:none;">포지션별 가이드</a>
+        <a href="WBS 일정표.dc.html" style="display:block; padding:8px 12px; border-radius:8px; color:#5a6478; font-size:13.5px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa; color:#2f3a4f;">WBS 일정표</a>
+        <a href="#" onClick="{{ noop }}" style="display:block; padding:8px 12px; border-radius:8px; color:#5a6478; font-size:13.5px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa; color:#2f3a4f;">접근성 점검리스트</a>
+        <a href="#" onClick="{{ noop }}" style="display:block; padding:8px 12px; border-radius:8px; color:#5a6478; font-size:13.5px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa; color:#2f3a4f;">배포리스트</a>
+        <a href="#" onClick="{{ noop }}" style="display:block; padding:8px 12px; border-radius:8px; color:#5a6478; font-size:13.5px; font-weight:600; text-decoration:none; border:1px solid #d3def5; background:#fbfcfe;">주간보고서 생성기</a>
+      </div>
+
+      <div style="font-size:10.5px; font-weight:700; letter-spacing:.08em; color:#a3abbb; padding:16px 12px 6px;">GENERAL</div>
+      <a href="#" onClick="{{ noop }}" style="display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; color:#4a5468; font-size:14px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+        산출물 보관함
+      </a>
+      <a href="#" onClick="{{ noop }}" style="display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; color:#4a5468; font-size:14px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        시스템 설정
+      </a>
+
+      <div style="font-size:10.5px; font-weight:700; letter-spacing:.08em; color:#a3abbb; padding:16px 12px 6px;">ADMIN</div>
+      <a href="#" onClick="{{ noop }}" style="display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; color:#4a5468; font-size:14px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        회원 관리
+      </a>
+    </nav>
+
+    <div style="margin-top:auto; padding:14px 16px; border-top:1px solid #eef1f6; display:flex; align-items:center; gap:10px;">
+      <div style="width:32px; height:32px; border-radius:50%; background:#dde7fb; color:#2563eb; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">인</div>
+      <div style="line-height:1.3; flex:1; min-width:0;">
+        <div style="font-size:13px; font-weight:700; color:#2a3346;">김인호</div>
+        <div style="font-size:11px; color:#9aa2b3;">PM · 접근성팀</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+
+    <!-- Top bar -->
+    <header style="display:flex; align-items:center; justify-content:space-between; padding:18px 28px; background:#ffffff; border-bottom:1px solid #e8ecf3; flex-shrink:0;">
+      <div>
+        <div style="font-size:19px; font-weight:800; letter-spacing:-.02em; color:#101727;">포지션별 가이드</div>
+        <div style="font-size:12.5px; color:#8a93a6; margin-top:2px;">KWCAG 2.2 · 웹와치 기준 · 포지션별 단계 체크리스트 · {{ proj.name }}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; position:relative;">
+        <button onClick="{{ toggleDrop }}" style="display:flex; align-items:center; gap:10px; padding:9px 14px; background:#fff; border:1px solid #d8dee9; border-radius:10px; cursor:pointer; font-family:inherit; min-width:220px;" style-hover="border-color:#aab6cc;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#22a06b; flex-shrink:0;"></span>
+          <span style="font-size:13.5px; font-weight:700; color:#1f2a3d; flex:1; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ proj.name }}</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a93a6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <sc-if value="{{ dropOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; top:48px; right:0; width:280px; background:#fff; border:1px solid #e2e7f0; border-radius:12px; box-shadow:0 12px 30px rgba(28,40,64,.14); padding:6px; z-index:30;">
+            <sc-for list="{{ projects }}" as="p" hint-placeholder-count="3">
+              <button onClick="{{ p.select }}" style="display:flex; align-items:center; gap:10px; width:100%; padding:10px 11px; background:{{ p.bg }}; border:none; border-radius:8px; cursor:pointer; font-family:inherit; text-align:left;" style-hover="background:#f4f6fa;">
+                <span style="width:7px; height:7px; border-radius:50%; background:{{ p.dot }}; flex-shrink:0;"></span>
+                <span style="flex:1; min-width:0;">
+                  <span style="display:block; font-size:13px; font-weight:700; color:#22304a;">{{ p.name }}</span>
+                  <span style="display:block; font-size:11px; color:#9aa2b3;">{{ p.client }}</span>
+                </span>
+                <sc-if value="{{ p.active }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </header>
+
+    <!-- body: position rail + content -->
+    <div style="flex:1; display:flex; overflow:hidden;">
+
+      <!-- POSITION RAIL -->
+      <div style="width:236px; flex-shrink:0; background:#fbfcfe; border-right:1px solid #e8ecf3; overflow-y:auto; padding:16px 12px;">
+        <div style="font-size:10.5px; font-weight:700; letter-spacing:.08em; color:#a3abbb; padding:4px 8px 10px;">포지션 선택</div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <sc-for list="{{ posList }}" as="p" hint-placeholder-count="6">
+            <button onClick="{{ p.select }}" style="display:flex; align-items:center; gap:11px; width:100%; padding:11px 11px; border:1px solid {{ p.border }}; background:{{ p.bg }}; border-radius:11px; cursor:pointer; font-family:inherit; text-align:left;" style-hover="border-color:#c2cee4;">
+              <div style="width:34px; height:34px; border-radius:9px; background:{{ p.iconBg }}; color:{{ p.iconColor }}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">{{ p.icon }}</div>
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                  <span style="font-size:13.5px; font-weight:700; color:{{ p.nameColor }};">{{ p.name }}</span>
+                  <span style="font-size:11px; font-weight:700; color:{{ p.pctColor }};">{{ p.pct }}%</span>
+                </div>
+                <div style="height:5px; background:#eaedf3; border-radius:3px; overflow:hidden; margin-top:6px;"><div style="width:{{ p.pct }}%; height:100%; background:{{ p.barColor }}; border-radius:3px; transition:width .4s ease;"></div></div>
+                <div style="font-size:10.5px; color:#9aa2b3; margin-top:5px;">{{ p.done }}/{{ p.total }} 완료</div>
+              </div>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="margin-top:16px; padding:12px; background:#fff; border:1px solid #e8ecf3; border-radius:11px;">
+          <div style="font-size:10.5px; font-weight:700; letter-spacing:.06em; color:#a3abbb; margin-bottom:9px;">태그 범례</div>
+          <div style="display:flex; flex-direction:column; gap:7px;">
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:10.5px; font-weight:700; color:#c47e10; background:#fdf3e2; padding:2px 7px; border-radius:5px;">리스크</span><span style="font-size:11px; color:#8a93a6;">놓치면 일정·비용 영향</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:10.5px; font-weight:700; color:#2563eb; background:#eaf1ff; padding:2px 7px; border-radius:5px;">산출물</span><span style="font-size:11px; color:#8a93a6;">문서 작업 필요</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:10.5px; font-weight:700; color:#7c4dff; background:#f1ecff; padding:2px 7px; border-radius:5px;">외부 협의</span><span style="font-size:11px; color:#8a93a6;">벤더·클라이언트 협의</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div style="flex:1; overflow-y:auto; padding:24px 28px 40px;">
+        <div style="max-width:880px;">
+
+          <!-- position header -->
+          <div style="display:flex; align-items:flex-start; gap:14px; margin-bottom:6px;">
+            <div style="width:46px; height:46px; border-radius:12px; background:{{ cur.iconBg }}; color:{{ cur.iconColor }}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">{{ cur.icon }}</div>
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:9px;">
+                <h1 style="font-size:21px; font-weight:800; letter-spacing:-.02em; color:#101727;">{{ cur.name }}</h1>
+                <span style="font-size:12px; font-weight:700; color:#2563eb; background:#eef4ff; padding:3px 9px; border-radius:6px;">{{ cur.role }}</span>
+              </div>
+              <div style="font-size:13px; color:#6b7488; margin-top:5px; line-height:1.5;">{{ cur.meta }}</div>
+            </div>
+          </div>
+
+          <!-- progress summary -->
+          <div style="display:flex; align-items:center; gap:14px; margin:16px 0 24px; padding:14px 18px; background:#fff; border:1px solid #e8ecf3; border-radius:12px;">
+            <div style="font-size:13px; font-weight:700; color:#3a4358;">진행률</div>
+            <div style="flex:1; height:8px; background:#eef0f5; border-radius:4px; overflow:hidden;"><div style="width:{{ cur.pct }}%; height:100%; background:linear-gradient(90deg,#3b82f6,#2563eb); border-radius:4px; transition:width .4s ease;"></div></div>
+            <div style="font-size:13px; font-weight:800; color:#2563eb;">{{ cur.pct }}%</div>
+            <div style="font-size:12.5px; color:#8a93a6;">{{ cur.done }} / {{ cur.total }} 완료</div>
+          </div>
+
+          <!-- blocks -->
+          <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="10">
+
+            <sc-if value="{{ b.isPhase }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; align-items:center; gap:10px; margin:26px 0 14px;">
+                <span style="font-size:12px; font-weight:800; color:#fff; background:{{ b.color }}; padding:5px 12px; border-radius:7px; letter-spacing:.01em;">{{ b.label }}</span>
+                <div style="flex:1; height:1px; background:#e8ecf3;"></div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ b.isGroup }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:13.5px; font-weight:800; color:#22304a; margin:16px 0 9px; padding-left:2px;">{{ b.title }}</div>
+            </sc-if>
+
+            <sc-if value="{{ b.isItem }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 14px; background:{{ b.cardBg }}; border:1px solid {{ b.cardBorder }}; border-radius:11px; margin-bottom:7px;" style-hover="border-color:#c2cee4;">
+                <div onClick="{{ b.toggle }}" style="width:20px; height:20px; border-radius:6px; border:2px solid {{ b.boxBorder }}; background:{{ b.boxBg }}; flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; cursor:pointer;">{{ b.check }}</div>
+                <div onClick="{{ b.toggle }}" style="flex:1; min-width:0; cursor:pointer;">
+                  <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
+                    <span style="font-size:14px; font-weight:600; color:{{ b.titleColor }}; text-decoration:{{ b.strike }};">{{ b.text }}</span>
+                    <sc-if value="{{ b.custom }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; font-weight:700; color:#0d8a72; background:#e3f6f1; padding:2px 7px; border-radius:5px;">추가됨</span></sc-if>
+                    <sc-for list="{{ b.tags }}" as="t" hint-placeholder-count="0">
+                      <span style="font-size:10.5px; font-weight:700; color:{{ t.color }}; background:{{ t.bg }}; padding:2px 7px; border-radius:5px;">{{ t.label }}</span>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ b.hasDetail }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:12.5px; color:{{ b.detailColor }}; margin-top:4px; line-height:1.55;">{{ b.detail }}</div>
+                  </sc-if>
+                </div>
+                <button onClick="{{ b.remove }}" title="항목 삭제" style="flex-shrink:0; width:26px; height:26px; border:none; background:transparent; border-radius:7px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#b6bdca;" style-hover="background:#fdeaee; color:#d11d44;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>
+                </button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ b.isAdd }}" hint-placeholder-val="{{ false }}">
+              <sc-if value="{{ b.adding }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; flex-direction:column; gap:8px; padding:13px 14px; background:#f5f8ff; border:1px solid #c2d3f2; border-radius:11px; margin-bottom:7px;">
+                  <input value="{{ b.draftText }}" onInput="{{ b.onText }}" onKeyDown="{{ b.onKey }}" placeholder="체크리스트 항목 입력" autoFocus="{{ true }}" style="width:100%; padding:9px 11px; border:1px solid #d8dee9; border-radius:8px; font-family:inherit; font-size:13.5px; color:#22304a; outline:none;" style-focus="border-color:#2563eb;" />
+                  <input value="{{ b.draftDetail }}" onInput="{{ b.onDetail }}" onKeyDown="{{ b.onKey }}" placeholder="설명 (선택)" style="width:100%; padding:8px 11px; border:1px solid #e2e7f0; border-radius:8px; font-family:inherit; font-size:12.5px; color:#5a6478; outline:none;" style-focus="border-color:#2563eb;" />
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <button onClick="{{ b.confirm }}" style="padding:7px 16px; background:#2563eb; color:#fff; border:none; border-radius:8px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer;" style-hover="background:#1d4ed8;">추가</button>
+                    <button onClick="{{ b.cancel }}" style="padding:7px 14px; background:#fff; color:#6b7488; border:1px solid #d8dee9; border-radius:8px; font-family:inherit; font-size:12.5px; font-weight:600; cursor:pointer;" style-hover="background:#f4f6fa;">취소</button>
+                    <span style="font-size:11.5px; color:#9aa2b3; margin-left:auto;">Enter 로 추가</span>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.notAdding }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ b.start }}" style="display:flex; align-items:center; gap:8px; width:100%; padding:10px 14px; background:transparent; border:1.5px dashed #cdd6e4; border-radius:11px; margin-bottom:7px; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; color:#7b8499;" style-hover="border-color:#2563eb; color:#2563eb; background:#f8faff;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  항목 추가
+                </button>
+              </sc-if>
+            </sc-if>
+
+            <sc-if value="{{ b.isCallout }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; gap:11px; padding:13px 15px; background:{{ b.calloutBg }}; border:1px solid {{ b.calloutBorder }}; border-left:3px solid {{ b.calloutAccent }}; border-radius:10px; margin:4px 0 12px;">
+                <div style="flex-shrink:0; margin-top:1px;">{{ b.calloutIcon }}</div>
+                <div style="flex:1;">
+                  <div style="font-size:12.5px; font-weight:800; color:{{ b.calloutAccent }}; margin-bottom:3px;">{{ b.calloutTitle }}</div>
+                  <div style="font-size:12.5px; color:#5a6478; line-height:1.6;">{{ b.calloutBody }}</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ b.isTable }}" hint-placeholder-val="{{ false }}">
+              <div style="margin:18px 0 8px;">
+                <div style="font-size:13.5px; font-weight:800; color:#22304a; margin-bottom:10px;">{{ b.tableTitle }}</div>
+                <div style="border:1px solid #e8ecf3; border-radius:12px; overflow:hidden; background:#fff;">
+                  <div style="display:grid; grid-template-columns:{{ b.gridCols }}; background:#fafbfd; border-bottom:1px solid #eef1f6;">
+                    <sc-for list="{{ b.cols }}" as="c" hint-placeholder-count="2">
+                      <div style="padding:11px 16px; font-size:11.5px; font-weight:700; color:#8a93a6; letter-spacing:.01em;">{{ c }}</div>
+                    </sc-for>
+                  </div>
+                  <sc-for list="{{ b.rows }}" as="row" hint-placeholder-count="4">
+                    <div style="display:grid; grid-template-columns:{{ b.gridCols }}; border-bottom:1px solid #f1f3f8;">
+                      <div style="padding:12px 16px; font-size:13px; font-weight:700; color:#22304a; border-right:1px solid #f1f3f8;">{{ row.k }}</div>
+                      <div style="padding:12px 16px; font-size:12.5px; color:#5a6478; line-height:1.6;">{{ row.v }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+          </sc-for>
+
+          <div style="height:24px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { posIdx: 0, projectIdx: 0, dropOpen: false, checked: {}, added: {}, deleted: {}, adding: null, draftText: '', draftDetail: '' };
+  LS_KEY = 'etribe_guide_checklist_v1';
+
+  PROJECTS = [
+    { name: '롯데GRS 접근성 인증', client: '롯데GRS', dot: '#22a06b' },
+    { name: 'KB금융 모바일 접근성', client: 'KB금융지주', dot: '#3b82f6' },
+    { name: '현대백화점 웹 리뉴얼', client: '현대백화점', dot: '#f0a020' },
+  ];
+
+  // tag map
+  T = {
+    r: { label: '리스크', color: '#c47e10', bg: '#fdf3e2' },
+    o: { label: '산출물', color: '#2563eb', bg: '#eaf1ff' },
+    e: { label: '외부 협의', color: '#7c4dff', bg: '#f1ecff' },
+  };
+
+  PHASE = {
+    '착수 전':  { color: '#7c4dff' },
+    '진행 중':  { color: '#2563eb' },
+    '심사 전':  { color: '#0d8a72' },
+    '심사':     { color: '#c47e10' },
+    '완료 후':  { color: '#178055' },
+  };
+
+  ICONS = {
+    pm:   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+    pub:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+    scr:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8l3 3-3 3M12 16h5"/></svg>',
+    dev:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M11 18h2"/></svg>',
+    des:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2a10 10 0 1 0 0 20 2 2 0 0 0 1.5-3.3A2 2 0 0 1 15 15h2a5 5 0 0 0 5-5c0-4.4-4.5-8-10-8z"/></svg>',
+    qa:   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/><path d="M8 11l2 2 4-4"/></svg>',
+  };
+
+  ICON_THEME = {
+    pm:  { bg: '#eef4ff', color: '#2563eb' }, pub: { bg: '#f1ecff', color: '#7c4dff' },
+    scr: { bg: '#e3f6f1', color: '#0d8a72' }, dev: { bg: '#eaf1ff', color: '#2f6bed' },
+    des: { bg: '#fdf3e2', color: '#c47e10' }, qa:  { bg: '#e6f6ee', color: '#178055' },
+  };
+
+  POS = [
+    {
+      id: 'pm', icon: 'pm', name: 'PM · 프로젝트 매니저', role: '총괄', meta: '전체 일정 관리 · 이해관계자 커뮤니케이션 · 웹와치 창구 · 산출물 취합',
+      sections: [
+        { phase: '착수 전', group: '계약 & 범위', items: [
+          ['심사 범위 확정 후 계약 진행', '웹 페이지 수 / 앱 뷰 수 기준으로 심사 범위 확정'],
+          ['심사비 납부 주체 확인', '납부 주체(이트라이브) 여부 확인'],
+          ['사이트 소유·운영 기관 정보 수령', '웹와치 신청 시 클라이언트에게 수령'],
+        ]},
+        { phase: '착수 전', group: '외부 솔루션 사전 식별', items: [
+          ['자체 수정 불가 외부 솔루션 목록화', '보안 키패드, 외부 결제/인증 iframe, 유튜브 자막, 통합 멤버십 등 전수 조사', 'e'],
+          ['외부 솔루션별 접근성 지원 여부 확인', '벤더사에 키보드 접근·대체 수단 제공 가능 여부 문의. 수정 불가 시 마크 획득 불가', 'e'],
+        ], note: { tone: 'warn', title: '주의', body: '외부 솔루션 협의는 벤더사 응답까지 수 주 걸릴 수 있음. 착수 전에 시작하지 않으면 심사 일정에 직접 영향.' } },
+        { phase: '착수 전', group: '개발 환경 사전 신청 및 셋팅', items: [
+          ['GitLab/GitHub 계정 신청 및 권한 부여', '퍼블리셔·스크립터·개발자별 저장소 접근 권한 목록 작성 후 클라이언트 요청'],
+          ['STG 서버 접근 계정 발급', '개발·검증용 환경 접속 정보 수령, VPN/방화벽 신청 병행'],
+          ['테스트플라이트 계정 등록', 'iOS 심사용 빌드 수신 계정 전달, 배포 초대 확인까지 완료'],
+          ['테스트용 서비스 로그인 계정 생성', '마이페이지·주문·즐겨찾기 등 심사 필요 최소 데이터 사전 세팅'],
+          ['클라이언트 측 배포 스케줄 공유 요청', '운영 배포 주기 파악해 수정 반영 타이밍·심사 일정 충돌 사전 조율', 'r'],
+          ['모바일 테스트 환경 구축', 'Android USB 원격 디버깅, iOS 실기기 VoiceOver 환경 팀 내 확보'],
+        ], note: { tone: 'tip', title: '체크포인트', body: '위 항목 중 하나라도 미완료 상태로 개선 작업이 시작되면 코드 반영·검증이 불가. PM이 킥오프 전 완료 여부를 표로 관리 권장.' } },
+        { phase: '착수 전', group: '디자인 가이드 및 원본 요청', items: [
+          ['Figma 원본 파일 Edit 권한 공유 요청', '퍼블리셔·디자이너 계정 전달, 초대 수락 및 접근 확인까지'],
+          ['디자인 가이드 문서 수령', '컬러 시스템·타이포그래피·컴포넌트 정의 포함 여부 확인, 미비 시 보완 요청', 'o'],
+          ['브랜드 가이드라인 수령', '로고 사용 규칙, 컬러 팔레트(HEX/RGB) 포함 여부 확인'],
+          ['아이콘·이미지 에셋 원본 요청', 'SVG(벡터)·PNG(래스터) 구분 수령, 용도별 사이즈 정의 확인'],
+        ], note: { tone: 'warn', title: '주의', body: 'Figma Edit 권한 없이 작업 시작 시 치수·색상값 확인 불가로 오류 가능성 증가. PNG만 수령 시 확대 품질 저하 — 원본 확보 필요.' } },
+        { phase: '착수 전', group: 'WBS 작성', items: [
+          ['WBS 초안 수립', '사전 진단 → 개선 작업 → 심사 신청(한 달 전) → 1차 심사 → 재심사 → 인증 획득 일정', 'o'],
+          ['포지션별 투입 인원 확정', '퍼블리셔·스크립터·개발자·디자이너·QA'],
+          ['클라이언트 측 담당 PM 및 실무 창구 확인', ''],
+        ]},
+        { phase: '진행 중', group: '보고 & 커뮤니케이션', items: [
+          ['주간 보고 체계 수립', '포지션별 수정 완료 항목 집계 + 이슈 사항 클라이언트 공유', 'o'],
+          ['진척 지연 시 사유·만회 가능성 함께 브리핑', '단순 수치 보고 금지'],
+          ['내부 이슈 에스컬레이션 기준 사전 정의', ''],
+        ]},
+        { phase: '진행 중', group: '이슈 관리', items: [
+          ['외부 솔루션 벤더사 협의 진행 상황 추적', '응답 지연 시 클라이언트 에스컬레이션', 'e'],
+          ['배포 일정과 수정 완료 시점 싱크 관리', '배포 누락 시 재심사 위험', 'r'],
+          ['이슈 로그 별도 관리', '발견 → 담당자 배분 → 수정 확인 흐름', 'o'],
+        ]},
+        { phase: '진행 중', group: '디자인 & 협업', items: [
+          ['디자인 가이드 및 Figma Edit 권한 초반 수령', '미수령 시 즉시 재요청'],
+          ['디자이너-퍼블리셔 간 피드백 루프 조율', 'PM이 중간 창구'],
+        ]},
+        { phase: '심사', group: '심사 신청', items: [
+          ['웹와치 심사 방식 최종 협의', '원격/파견, 앱 배포 방식(APK/테스트플라이트) 확인 (심사 한 달 전)'],
+          ['웹와치 심사 신청', '웹/앱 각각 별도 신청, 심사 한 달 전 신청 목표'],
+          ['심사용 계정 별도 생성 요청', '로그인 필요 서비스'],
+          ['웹와치 담당자 연락 채널 확보', ''],
+        ]},
+        { phase: '심사', group: '심사 후 대응', items: [
+          ['1차 심사 리포트 지적 항목 포지션별 배분', '', 'o'],
+          ['재심사 일정(약 1주) 역산해 수정 마감 설정', '', 'r'],
+          ['재심사 전 수정 항목 전수 확인', 'QA와 교차 확인'],
+        ]},
+        { phase: '완료 후', group: '산출물 정리', items: [
+          ['완료 보고서 작성', 'AS-IS/TO-BE 개선 사례, 항목별 개선율, 인증 마크 3종 취득 결과', 'o'],
+          ['인수인계 문서 작성', '사용자 매뉴얼 / 디자인 가이드 등', 'o'],
+          ['산출물 목록 상급자 검토 → 승인 후 전달', '내부 검토 → 클라이언트 PM 전달 (순서 준수)'],
+        ]},
+        { phase: '완료 후', group: '클라이언트 인계', items: [
+          ['인증 마크 게시 위치 및 갱신 일정 안내', ''],
+        ]},
+      ],
+      table: { title: '주요 관리 포인트', cols: ['항목', '내용'], rows: [
+        ['심사 일정 리스크', '앱 심사는 마켓 배포 승인 시간 포함. STG 또는 APK/테스트플라이트 방식 사전 합의. 온라인 심사 불가 시 파견 심사로 전환.'],
+        ['배포 스케줄 충돌 방지', '클라이언트 운영 배포 주기를 착수 전에 파악, 접근성 수정 반영 타이밍과 심사 일정 충돌 방지.'],
+        ['외부 솔루션 리스크', '수정 불가 영역은 심사 전까지 벤더사 대응 완료 여부 추적. 미해결 시 클라이언트와 리스크 공유 필수.'],
+        ['산출물 목록', 'WBS, 사전진단 리포트, 주간현황, 완료보고서(PPTX), 사용자 매뉴얼, 디자인 가이드'],
+      ]},
+    },
+    {
+      id: 'pub', icon: 'pub', name: '퍼블리셔', role: 'HTML / ARIA', meta: 'HTML 구조 · WAI-ARIA 마크업 · 스크린리더 호환 · 포커스 처리',
+      sections: [
+        { phase: '착수 전', items: [
+          ['마크업 수정 항목 목록화', '사전 진단 결과 기반, 웹(PC/모바일) 페이지별 이슈 매핑'],
+          ['Figma Edit 권한 수령 확인', '치수·색상값·컴포넌트 구조 직접 확인 가능 여부 접근 테스트'],
+        ]},
+        { phase: '진행 중', items: [
+          ['대체 텍스트(alt) 작성', '의미 있는 이미지·아이콘 전수 검토, 장식 이미지는 alt="" 처리'],
+          ['페이지 title 태그 정비', '형식: 현재페이지 > Depth | 서비스명'],
+          ['heading 구조 정비', 'h1~h6 계층 논리 순서, 모바일 웹 heading role 누락 점검'],
+          ['WAI-ARIA 적용', '탭(tablist/tab/tabpanel), 아코디언(aria-expanded), 모달(dialog/aria-modal), 알림(aria-live)'],
+          ['포커스 가시성 확보', '포커스 테두리가 클릭 영역 기준 표시되도록 display:block 또는 flex 적용'],
+          ['aria-hidden 적용 관리', '장식 아이콘·이미지 처리, aria-hidden 요소로 포커스 이동 차단 확인'],
+          ['오류 메시지 연결', '폼 오류 시 aria-describedby로 오류 메시지·입력 필드 명시적 연결'],
+        ]},
+        { phase: '심사', items: [
+          ['심사 지적 항목 중 마크업 관련 수정', '재심사 일정 내 완료'],
+        ]},
+        { phase: '완료 후', items: [
+          ['수정 내역 가이드 문서화', '퍼블리싱 표준 가이드에 접근성 마크업 규칙 반영'],
+        ]},
+      ],
+    },
+    {
+      id: 'scr', icon: 'scr', name: '스크립터', role: 'Dynamic ARIA', meta: '동적 ARIA 처리 · 키보드 인터랙션 · 스크린리더 상태 알림 · DOM 변경 감지',
+      sections: [
+        { phase: '착수 전', items: [
+          ['동적 콘텐츠 목록화', 'AJAX 갱신, 레이어 팝업, 탭 전환, 슬라이더 등 JS 의존 UI 전수 조사'],
+        ]},
+        { phase: '진행 중', items: [
+          ['탭 컴포넌트 키보드 인터랙션', '좌우 화살표 이동, Home/End 지원, 포커스·활성화 동시 처리'],
+          ['AJAX 콜백 타이밍 처리', '상태 속성(aria-selected)은 AJAX 완료 전 먼저 변경 후 요청 (발화 타이밍 확보)'],
+          ['aria-live 영역 운용', '동적 상태 변화 시 polite/assertive 적절히 선택'],
+          ['MutationObserver 패턴', '동적 DOM 교체로 ARIA 속성 초기화 시 옵저버로 재적용'],
+          ['모바일 고정 하단바 가림 이슈', 'input focusin 시 스크롤 보정 (iOS: setInterval, Android: scroll debounce)'],
+          ['jQuery UI 탭 위젯 ARIA 수정', 'aria-expanded 자동 주입 문제, role/tabIndex 수동 제어'],
+          ['슬라이더 aria-current 과다 발화 방지', 'autoplay 중 페이지네이션 불릿 갱신 주기 조절'],
+        ]},
+        { phase: '심사', items: [
+          ['심사 지적 항목 중 스크립트 수정', '재심사 일정 내 완료 및 스크린리더 재검증'],
+        ]},
+        { phase: '완료 후', items: [
+          ['접근성 JS 패턴 내부 문서화', '재사용 가능한 컴포넌트 init() 함수로 정리'],
+        ]},
+      ],
+      endNotes: [{ tone: 'tip', title: '스크린리더 환경 확인 필수', body: 'NVDA+Chrome(Win), VoiceOver(iOS/macOS), TalkBack(Android), 센스리더(Win) — 동일 마크업도 발화 방식이 달라 다중 환경 검증 필수.' }],
+    },
+    {
+      id: 'dev', icon: 'dev', name: '개발자', role: 'iOS / Android', meta: 'iOS/Android 앱 접근성 · 네이티브 role 설정 · WebView 이슈 · 심사용 빌드 관리',
+      sections: [
+        { phase: '착수 전', items: [
+          ['앱 심사 전달 방식 결정', 'Android: APK 직접 전달 / iOS: 테스트플라이트 계정 발급·전달'],
+          ['심사 서버 환경 확인', 'STG/운영 중 심사 대상 버전 명확히 결정 후 웹와치 안내'],
+        ]},
+        { phase: '진행 중', items: [
+          ['iOS 헤딩 role 적용', 'accessibilityTraits(.header) 또는 accessibilityHeading 설정'],
+          ['Android TalkBack 포커스 박스 오프셋 이슈', 'WebView 좌표 불일치 시 네이티브 ViewCompat 설정 검토'],
+          ['앱 튜토리얼·설치 화면 접근성', '설치 가이드, QR 영역 대체 텍스트·role 설정'],
+          ['외부 보안 모듈 접근성 협의', '벤더사와 키보드 접근·대체 수단 제공 여부 확인 (PM과 병행)', 'e'],
+          ['reCAPTCHA 방화벽 이슈', 'www.recaptcha.net 도메인으로 프론트·백엔드 통일 적용 검토'],
+        ]},
+        { phase: '심사', items: [
+          ['심사용 APK / 테스트플라이트 빌드 제출', '마켓 배포 일정과 분리해 심사 전용 버전 별도 관리'],
+          ['심사 지적 사항 중 네이티브 앱 영역 수정', '재심사 빌드 재제출'],
+        ]},
+        { phase: '완료 후', items: [
+          ['인증 마크 앱 내 게시', '접근성 정책 페이지 또는 앱 정보 화면에 마크 노출'],
+        ]},
+      ],
+      endNotes: [{ tone: 'warn', title: '앱 배포 일정 주의', body: '운영 앱 배포 스케줄과 심사 일정이 충돌하지 않도록 사전 조율. 마켓 승인 지연 시 심사 일정 전체가 밀릴 수 있음.' }],
+    },
+    {
+      id: 'des', icon: 'des', name: '디자이너', role: '명도대비 / 포커스', meta: '명도대비 · 색상 독립 인식 · 포커스 라인 · 접근성 디자인 가이드',
+      sections: [
+        { phase: '착수 전', items: [
+          ['Figma Edit 권한으로 공유', '퍼블리셔 계정 초대 후 접근 가능 여부 확인'],
+          ['디자인 가이드 문서 전달', '컬러 시스템(HEX/RGB), 타이포그래피, 컴포넌트 정의 포함', 'o'],
+          ['브랜드 가이드라인 전달', '로고 사용 규칙, 컬러 팔레트 공유'],
+          ['아이콘·이미지 에셋 원본 전달', 'SVG·PNG 구분, 용도별 사이즈 정의 포함'],
+          ['사전 진단 리포트 내 디자인 항목 파악', '명도대비 미달, 색상 단독 정보 전달, 포커스 라인 부재 유형 분류'],
+        ]},
+        { phase: '진행 중', items: [
+          ['명도대비 기준 충족 색상 수정', '일반 4.5:1, 확대 지원 시 3:1. 브랜드 컬러 미달 시 유사 색상 대안 검토'],
+          ['색상 독립 인식', '색상 외 형태·텍스트·패턴 등 추가 시각 단서 병행 제공'],
+          ['포커스 라인 디자인', '명확한 아웃라인 스타일 정의 및 Figma 반영'],
+          ['Figma 피드백 루프', '수정 요청 → 기준 충족 수정안 → PNG/파일 재공유 (PNG 권장)'],
+        ]},
+        { phase: '완료 후', items: [
+          ['접근성 디자인 가이드 문서화', '색상 팔레트, 명도대비 표, 포커스 스타일 기준 포함', 'o'],
+        ]},
+      ],
+      table: { title: '명도대비 기준', cols: ['유형', '기준'], rows: [
+        ['일반 텍스트', '4.5:1 이상'],
+        ['디바이스 확대 기능 지원 시', '3:1 이상'],
+        ['큰 텍스트 (18pt+ / 14pt bold+)', '3:1 이상'],
+      ]},
+      endNotes: [{ tone: 'tip', title: '브랜드 컬러 협의', body: '노란색 등 브랜드 컬러가 명도대비 기준 미달인 경우, 기준 충족 시 주황색 계열로 변경될 수 있어 브랜드팀 사전 협의 권장.' }],
+    },
+    {
+      id: 'qa', icon: 'qa', name: 'QA', role: '검증 / 다중 환경', meta: '스크린리더 검증 · 키보드 탐색 · 다중 환경 테스트 · 심사 전 사전 점검',
+      sections: [
+        { phase: '착수 전', items: [
+          ['테스트 환경 세팅', 'NVDA+Chrome, VoiceOver+Safari, TalkBack, 센스리더 설치 및 USB 원격 디버깅 구성'],
+          ['심사 체크리스트 작성', 'KWCAG 2.2 기반, 웹/iOS/Android 플랫폼별 테스트 시나리오 수립', 'o'],
+        ]},
+        { phase: '진행 중', items: [
+          ['키보드 단독 탐색 검증', 'Tab, Shift+Tab, Enter, Space, 화살표키로 모든 기능 접근 가능 확인'],
+          ['스크린리더 발화 검증', '대체 텍스트·역할·상태값(선택·확장·오류) 다중 환경 확인'],
+          ['명도대비 측정', '개발자도구/전용 도구로 수정 색상 기준 충족 수치 확인'],
+          ['포커스 이동 순서 검증', '논리 순서, 모달 열림 시 포커스 이동·닫힘 시 원래 위치 복귀 확인'],
+          ['동적 콘텐츠 검증', 'AJAX 후 aria-live 발화, 탭 전환 시 aria-selected 즉시 반영 확인'],
+        ]},
+        { phase: '심사 전', items: [
+          ['심사 전 사전 점검', '웹와치 실제 테스트 시나리오 기준 전수 재검토, 미완 항목 PM 즉시 보고'],
+        ]},
+        { phase: '심사', items: [
+          ['1차 심사 리포트 분석', '지적 항목 유형 분류 후 포지션별 배분 지원'],
+        ]},
+        { phase: '완료 후', items: [
+          ['테스트 결과 문서 정리', '환경별 이슈 목록, 해결 방법, 잔여 이슈(범위 외) 명시', 'o'],
+        ]},
+      ],
+      table: { title: '테스트 환경 매트릭스', cols: ['플랫폼', '도구'], rows: [
+        ['웹 (PC/모바일)', 'NVDA + Chrome, VoiceOver + Safari, 센스리더 + Chrome, 키보드 단독'],
+        ['iOS 앱', 'VoiceOver (실기기), 테스트플라이트 빌드, 스위치 제어'],
+        ['Android 앱', 'TalkBack (실기기), USB 원격 디버깅, APK 빌드'],
+        ['공통 측정 도구', 'Chrome 접근성 탭, 명도대비 측정기, Accessibility Insights'],
+      ]},
+    },
+  ];
+
+  // seed some checked items for realism (per position id)
+  SEED = {
+    pm: [0, 1, 2, 3, 5, 6, 8], pub: [0, 1, 2, 3], scr: [0, 1, 2],
+    dev: [0, 1, 2], des: [0, 1, 2, 3, 4, 5], qa: [0, 1, 2, 3],
+  };
+
+  componentDidMount() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(this.LS_KEY) || 'null'); } catch (e) {}
+    if (saved && saved.checked) {
+      this.setState({ checked: saved.checked || {}, added: saved.added || {}, deleted: saved.deleted || {} });
+      return;
+    }
+    const checked = {};
+    this.POS.forEach(p => {
+      let gi = 0;
+      const seed = this.SEED[p.id] || [];
+      p.sections.forEach((sec, si) => sec.items.forEach((it, ii) => {
+        if (seed.indexOf(gi) !== -1) checked[p.id + '#' + si + '#s' + ii] = true;
+        gi++;
+      }));
+    });
+    this.setState({ checked });
+  }
+
+  persist() {
+    try {
+      localStorage.setItem(this.LS_KEY, JSON.stringify({
+        checked: this.state.checked, added: this.state.added, deleted: this.state.deleted,
+      }));
+    } catch (e) {}
+  }
+  mutate(fn) { this.setState(fn, () => this.persist()); }
+
+  // resolved item list for a section: seed (minus deleted) + custom
+  sectionItems(p, si) {
+    const sec = p.sections[si];
+    const key = p.id + '#' + si;
+    const out = [];
+    sec.items.forEach((it, ii) => {
+      const id = key + '#s' + ii;
+      if (this.state.deleted[id]) return;
+      out.push({ id, text: it[0], detail: it[1] || '', tagsCode: it[2] || '', custom: false });
+    });
+    (this.state.added[key] || []).forEach(c => {
+      out.push({ id: c.id, text: c.text, detail: c.detail || '', tagsCode: '', custom: true });
+    });
+    return out;
+  }
+
+  toggleItem(id) {
+    this.mutate(s => {
+      const ch = Object.assign({}, s.checked);
+      if (ch[id]) delete ch[id]; else ch[id] = true;
+      return { checked: ch };
+    });
+  }
+  removeItem(id, key, custom) {
+    this.mutate(s => {
+      const ch = Object.assign({}, s.checked); delete ch[id];
+      if (custom) {
+        const added = Object.assign({}, s.added);
+        added[key] = (added[key] || []).filter(c => c.id !== id);
+        return { checked: ch, added };
+      }
+      const del = Object.assign({}, s.deleted); del[id] = true;
+      return { checked: ch, deleted: del };
+    });
+  }
+  confirmAdd(key) {
+    const text = (this.state.draftText || '').trim();
+    if (!text) return;
+    const item = { id: key + '#c' + Date.now(), text, detail: (this.state.draftDetail || '').trim() };
+    this.mutate(s => {
+      const added = Object.assign({}, s.added);
+      added[key] = (added[key] || []).concat([item]);
+      return { added, adding: null, draftText: '', draftDetail: '' };
+    });
+  }
+
+  countPos(p) {
+    let total = 0, done = 0;
+    p.sections.forEach((sec, si) => this.sectionItems(p, si).forEach(item => {
+      total++;
+      if (this.state.checked[item.id]) done++;
+    }));
+    return { total, done, pct: total ? Math.round((done / total) * 100) : 0 };
+  }
+
+  noteStyle(tone) {
+    if (tone === 'warn') return {
+      bg: '#fff8ec', border: '#f6e3c2', accent: '#c47e10',
+      icon: React.createElement('svg', { width: 17, height: 17, viewBox: '0 0 24 24', fill: 'none', stroke: '#c47e10', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        React.createElement('path', { d: 'M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z' }),
+        React.createElement('path', { d: 'M12 9v4M12 17h.01' })),
+    };
+    return {
+      bg: '#eef4ff', border: '#d3def5', accent: '#2563eb',
+      icon: React.createElement('svg', { width: 17, height: 17, viewBox: '0 0 24 24', fill: 'none', stroke: '#2563eb', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        React.createElement('path', { d: 'M9 18h6M10 22h4' }),
+        React.createElement('path', { d: 'M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z' })),
+    };
+  }
+
+  renderVals() {
+    const cur = this.POS[this.state.posIdx];
+    const checkSvg = React.createElement('svg', { width: 13, height: 13, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: 3.2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+      React.createElement('path', { d: 'M20 6L9 17l-5-5' }));
+
+    // left rail list
+    const posList = this.POS.map((p, i) => {
+      const c = this.countPos(p);
+      const on = i === this.state.posIdx;
+      const th = this.ICON_THEME[p.id];
+      return {
+        select: () => this.setState({ posIdx: i }),
+        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: this.ICONS[p.icon] } }),
+        iconBg: th.bg, iconColor: th.color,
+        name: p.name.replace('PM · 프로젝트 매니저', 'PM'),
+        pct: c.pct, done: c.done, total: c.total,
+        bg: on ? '#fff' : 'transparent', border: on ? '#c2d3f2' : '#eef1f6',
+        nameColor: on ? '#101727' : '#3a4358', pctColor: on ? '#2563eb' : '#9aa2b3',
+        barColor: c.pct === 100 ? '#22a06b' : '#2563eb',
+      };
+    });
+
+    // build blocks for current position
+    const blocks = [];
+    let lastPhase = null;
+    cur.sections.forEach((sec, si) => {
+      if (sec.phase !== lastPhase) {
+        blocks.push({ isPhase: true, isGroup: false, isItem: false, isAdd: false, isCallout: false, isTable: false,
+          label: sec.phase, color: (this.PHASE[sec.phase] || {}).color || '#5a6478' });
+        lastPhase = sec.phase;
+      }
+      if (sec.group) {
+        blocks.push({ isPhase: false, isGroup: true, isItem: false, isAdd: false, isCallout: false, isTable: false, title: sec.group });
+      }
+      const key = cur.id + '#' + si;
+      this.sectionItems(cur, si).forEach(item => {
+        const uid = item.id;
+        const isChecked = !!this.state.checked[uid];
+        const tags = (item.tagsCode ? item.tagsCode.split(' ') : []).map(code => this.T[code]).filter(Boolean);
+        blocks.push({
+          isPhase: false, isGroup: false, isItem: true, isAdd: false, isCallout: false, isTable: false,
+          text: item.text, detail: item.detail, hasDetail: !!item.detail, tags, custom: item.custom,
+          toggle: () => this.toggleItem(uid),
+          remove: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.removeItem(uid, key, item.custom); },
+          check: isChecked ? checkSvg : '',
+          cardBg: isChecked ? '#f6faf7' : '#fff',
+          cardBorder: isChecked ? '#dcecdf' : '#e8ecf3',
+          boxBorder: isChecked ? '#22a06b' : '#cdd4e0',
+          boxBg: isChecked ? '#22a06b' : '#fff',
+          titleColor: isChecked ? '#8a93a6' : '#22304a',
+          detailColor: isChecked ? '#aab1bf' : '#6b7488',
+          strike: isChecked ? 'line-through' : 'none',
+        });
+      });
+      // add-item affordance for this section
+      const isAdding = this.state.adding === key;
+      blocks.push({
+        isPhase: false, isGroup: false, isItem: false, isAdd: true, isCallout: false, isTable: false,
+        adding: isAdding, notAdding: !isAdding,
+        draftText: this.state.draftText, draftDetail: this.state.draftDetail,
+        start: () => this.setState({ adding: key, draftText: '', draftDetail: '' }),
+        cancel: () => this.setState({ adding: null, draftText: '', draftDetail: '' }),
+        confirm: () => this.confirmAdd(key),
+        onText: (e) => this.setState({ draftText: e.target.value }),
+        onDetail: (e) => this.setState({ draftDetail: e.target.value }),
+        onKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); this.confirmAdd(key); } else if (e.key === 'Escape') { this.setState({ adding: null }); } },
+      });
+      if (sec.note) {
+        const ns = this.noteStyle(sec.note.tone);
+        blocks.push({ isPhase: false, isGroup: false, isItem: false, isAdd: false, isCallout: true, isTable: false,
+          calloutTitle: sec.note.title, calloutBody: sec.note.body,
+          calloutBg: ns.bg, calloutBorder: ns.border, calloutAccent: ns.accent, calloutIcon: ns.icon });
+      }
+    });
+
+    if (cur.table) {
+      blocks.push({ isPhase: false, isGroup: false, isItem: false, isAdd: false, isCallout: false, isTable: true,
+        tableTitle: cur.table.title, cols: cur.table.cols, gridCols: '180px 1fr',
+        rows: cur.table.rows.map(r => ({ k: r[0], v: r[1] })) });
+    }
+    (cur.endNotes || []).forEach(n => {
+      const ns = this.noteStyle(n.tone);
+      blocks.push({ isPhase: false, isGroup: false, isItem: false, isAdd: false, isCallout: true, isTable: false,
+        calloutTitle: n.title, calloutBody: n.body,
+        calloutBg: ns.bg, calloutBorder: ns.border, calloutAccent: ns.accent, calloutIcon: ns.icon });
+    });
+
+    const cc = this.countPos(cur);
+    const th = this.ICON_THEME[cur.id];
+
+    const projects = this.PROJECTS.map((p, i) => ({
+      name: p.name, client: p.client, dot: p.dot, active: i === this.state.projectIdx,
+      bg: i === this.state.projectIdx ? '#f5f8ff' : 'transparent',
+      select: () => this.setState({ projectIdx: i, dropOpen: false }),
+    }));
+
+    return {
+      noop: (e) => { if (e && e.preventDefault) e.preventDefault(); },
+      toggleDrop: () => this.setState(s => ({ dropOpen: !s.dropOpen })),
+      dropOpen: this.state.dropOpen,
+      projects, proj: this.PROJECTS[this.state.projectIdx],
+      posList, blocks,
+      cur: {
+        name: cur.name, role: cur.role, meta: cur.meta,
+        icon: React.createElement('span', { dangerouslySetInnerHTML: { __html: this.ICONS[cur.icon] } }),
+        iconBg: th.bg, iconColor: th.color,
+        pct: cc.pct, done: cc.done, total: cc.total,
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

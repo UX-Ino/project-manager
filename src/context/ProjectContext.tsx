@@ -8,8 +8,10 @@ export interface Project {
   name: string;
   slug: string;
   created_at: string;
+  is_completed?: boolean;
   wbs_sheet_url?: string | null;
   a11y_sheet_url?: string | null;
+  wbs_weeks?: { week_num: number; label: string; date_range: string }[] | null;
 }
 
 export interface ToastMessage {
@@ -27,6 +29,7 @@ interface ProjectContextType {
   fetchProjects: () => Promise<void>;
   handleCreateProject: (name: string, slug: string) => Promise<string | null>;
   handleDeleteProject: (id: string) => Promise<boolean>;
+  handleUpdateProjectStatus: (id: string, isCompleted: boolean) => Promise<boolean>;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -199,6 +202,25 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
   }, [projects, fetchProjects, showToast]);
 
+  const handleUpdateProjectStatus = useCallback(async (projectId: string, isCompleted: boolean): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ is_completed: isCompleted })
+        .eq('id', projectId);
+
+      if (error) throw error;
+      
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, is_completed: isCompleted } : p));
+      showToast(isCompleted ? '프로젝트가 완료 처리되었습니다.' : '프로젝트가 진행 중으로 변경되었습니다.');
+      return true;
+    } catch (err: any) {
+      console.error(err);
+      showToast(`프로젝트 상태 업데이트 실패: ${err.message}`);
+      return false;
+    }
+  }, [showToast]);
+
   return (
     <ProjectContext.Provider value={{
       session,
@@ -209,7 +231,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       showToast,
       fetchProjects,
       handleCreateProject,
-      handleDeleteProject
+      handleDeleteProject,
+      handleUpdateProjectStatus
     }}>
       {children}
     </ProjectContext.Provider>

@@ -86,11 +86,13 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
   const isProjectRelatedMenu = 
     activeMenu === 'checklist' || 
+    activeMenu === 'guide' ||
     activeMenu === 'wbs' || 
     activeMenu === 'a11y' || 
     activeMenu === 'weekly' || 
     activeMenu === 'deploy-slides' || 
     activeMenu === 'documents' ||
+    activeMenu === 'reports' ||
     (pathParts[0] === 'projects' && pathParts.length === 2); // /projects/[slug]
 
   return (
@@ -176,13 +178,15 @@ export default function Header({ onMenuToggle }: HeaderProps) {
       )}
 
       {/* Live Badge */}
-      <div
-        className="text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shrink-0"
-        style={{ backgroundColor: '#f0fdf9', color: '#00b493', border: '1px solid rgba(0,180,147,0.15)' }}
-      >
-        <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
-        Live
-      </div>
+      {!isProjectRelatedMenu && (
+        <div
+          className="text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shrink-0"
+          style={{ backgroundColor: '#f0fdf9', color: '#00b493', border: '1px solid rgba(0,180,147,0.15)' }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
+          Live
+        </div>
+      )}
 
       {/* New Project Dialog */}
       <ProjectModal 

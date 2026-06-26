@@ -1014,24 +1014,11 @@ export default function ProjectWbsPage() {
                   <span className="text-[11px] text-[#9aa2b3] font-semibold">{minDateStr} ~ {maxDateStr} ({totalDays}일)</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-3 text-[11px] font-semibold text-[#5a6478]">
-                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-[#22a06b]"></span><span>완료</span></div>
-                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-[#3b82f6]"></span><span>진행중</span></div>
-                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-[#cbd5e1]"></span><span>미진행</span></div>
-                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-[#7c4dff] rotate-45 rounded-[2px]"></span><span>마일스톤</span></div>
-                    
-                    <div className="w-[1px] h-3 bg-[#e5e8eb] mx-1" />
-                    
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-3.5 h-3 rounded border border-[#cbd5e1] bg-[#f1f5f9]" />
-                      <span>계획 일정</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="relative w-3.5 h-3 rounded border border-[#cbd5e1] bg-[#f1f5f9] flex items-center justify-center">
-                        <span className="absolute w-2.5 h-1 rounded-sm bg-[#3b82f6]" />
-                      </div>
-                      <span>실제 일정 (겹침)</span>
-                    </div>
+                  <div className="flex items-center gap-4 text-xs font-semibold text-[#5a6478]">
+                    <div className="flex items-center gap-1.5"><span className="w-3.5 h-2 rounded bg-[#22a06b]"></span><span>완료</span></div>
+                    <div className="flex items-center gap-1.5"><span className="w-3.5 h-2 rounded bg-[#3b82f6]"></span><span>진행중</span></div>
+                    <div className="flex items-center gap-1.5"><span className="w-3.5 h-2 rounded bg-[#cbd5e1]"></span><span>예정</span></div>
+                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-[#7c4dff] rotate-45 rounded-sm"></span><span>마일스톤</span></div>
                   </div>
                   
                   {/* 아코디언 일괄 제어 */}
@@ -1164,70 +1151,29 @@ export default function ProjectWbsPage() {
                                   {taskText}
                                 </span>
                               </div>
-                              <div className="flex-1 relative h-full flex items-center group">
+                              <div className="flex-1 relative h-full flex items-center">
                                 {posPlan && (
                                   <div
-                                    className="absolute h-[12px] rounded-md transition-all duration-500"
+                                    className="absolute h-[4px] rounded-md transition-all duration-500"
                                     style={{
                                       left: `${posPlan.left}%`,
                                       width: `${posPlan.width}%`,
                                       backgroundColor: `${currentPhaseColor}33`,
-                                      top: '14px',
-                                      zIndex: 10
+                                      top: posActual ? '12px' : '18px'
                                     }}
                                   />
                                 )}
                                 {posActual && (
                                   <div
-                                    className="absolute h-[6px] rounded-md transition-all duration-500"
+                                    className="absolute h-[4px] rounded-md transition-all duration-500"
                                     style={{
                                       left: `${posActual.left}%`,
                                       width: `${posActual.width}%`,
                                       backgroundColor: currentPhaseColor,
-                                      top: '17px',
-                                      zIndex: 20
+                                      top: posPlan ? '24px' : '18px'
                                     }}
                                   />
                                 )}
-                                
-                                {/* L1 통합 툴팁 */}
-                                {(posPlan || posActual) && (
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block bg-[#191f28] text-white text-[11px] rounded-lg p-3 whitespace-nowrap z-50 shadow-xl border border-[#333d4b] leading-normal font-sans pointer-events-none min-w-[200px]">
-                                    <p className="font-bold text-white mb-2 pb-1.5 border-b border-[#333d4b] flex items-center gap-1.5">
-                                      <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: currentPhaseColor }} />
-                                      <span>{taskText} (전체 일정)</span>
-                                    </p>
-                                    <div className="space-y-2">
-                                      <div className="flex flex-col gap-0.5">
-                                        <div className="flex items-center gap-1.5 text-[#94a3b8] font-bold text-[10px]">
-                                          <span className="w-1.5 h-1.5 rounded-sm" style={{ backgroundColor: `${currentPhaseColor}33` }} />
-                                          <span>계획 일정</span>
-                                        </div>
-                                        {comp.plan_start ? (
-                                          <span className="text-white font-medium pl-3">
-                                            {comp.plan_start} ~ {comp.plan_end} ({getDiffDays(comp.plan_start, comp.plan_end)}일)
-                                          </span>
-                                        ) : (
-                                          <span className="text-[#8b95a1] pl-3 italic">계획 없음</span>
-                                        )}
-                                      </div>
-                                      <div className="flex flex-col gap-0.5">
-                                        <div className="flex items-center gap-1.5 font-bold text-[10px]" style={{ color: currentPhaseColor }}>
-                                          <span className="w-1.5 h-1.5 rounded-sm" style={{ backgroundColor: currentPhaseColor }} />
-                                          <span>실제 일정</span>
-                                        </div>
-                                        {comp.actual_start ? (
-                                          <span className="text-white font-medium pl-3">
-                                            {comp.actual_start} ~ {comp.actual_end} ({getDiffDays(comp.actual_start, comp.actual_end)}일)
-                                          </span>
-                                        ) : (
-                                          <span className="text-[#8b95a1] pl-3 italic">실제 없음</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-
                                 {phaseIndex === 0 && todayPercent !== null && (
                                   <div
                                     className="absolute -translate-x-1/2 bg-[#e11d48] text-white text-[9.5px] font-bold px-1.5 py-0.5 rounded shadow-[0_1px_3px_rgba(225,29,72,0.35)] whitespace-nowrap z-50"
@@ -1273,7 +1219,7 @@ export default function ProjectWbsPage() {
                                   ) : (
                                     <>
                                       {row.level === 3 && <span className="text-[#8b95a1] mr-1.5">▪</span>}
-                                      {row.level >= 4 && <span className="text-[#cbd5e1] mr-1.5">▫</span>}
+                                      {row.level === 4 && <span className="text-[#cbd5e1] mr-1.5">▫</span>}
                                     </>
                                   )}
                                   <span className="truncate" title={taskText}>{taskText}</span>
@@ -1304,117 +1250,124 @@ export default function ProjectWbsPage() {
                                   </div>
                                 )}
                                 
-                                {!isMilestoneRow && (() => {
-                                  const actualProgress = row.actual_progress ?? 0;
-                                  const planDays = row.plan_start && row.plan_end ? getDiffDays(row.plan_start, row.plan_end) : 0;
-                                  const actualDays = row.actual_start && row.actual_end ? getDiffDays(row.actual_start, row.actual_end) : 0;
-                                  
-                                  const combinedTooltipText = (
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block bg-[#191f28] text-white text-[11.5px] rounded-lg p-3.5 whitespace-nowrap z-50 shadow-2xl border border-[#333d4b] leading-normal font-sans pointer-events-none min-w-[240px]">
-                                      <p className="font-bold text-white mb-2 pb-1.5 border-b border-[#333d4b]/70 flex items-center justify-between gap-3">
-                                        <span className="text-[12px] truncate max-w-[160px]" title={taskText}>{taskText}</span>
-                                        {row.assignee && <span className="text-[10px] text-[#8b95a1] font-normal shrink-0">담당: {row.assignee}</span>}
-                                      </p>
-                                      <div className="space-y-2">
-                                        {/* 계획 정보 */}
-                                        <div className="flex flex-col gap-0.5">
-                                          <div className="flex items-center gap-1.5 text-[#94a3b8] font-bold text-[10px]">
-                                            <span className="w-1.5 h-1.5 rounded-sm bg-[#cbd5e1]" />
-                                            <span>계획 일정 ({row.plan_progress}%)</span>
-                                          </div>
-                                          {row.plan_start ? (
-                                            <span className="text-white font-medium pl-3">
-                                              {row.plan_start} ~ {row.plan_end} ({planDays}일간)
-                                            </span>
-                                          ) : (
-                                            <span className="text-[#8b95a1] pl-3 italic">계획 일정 없음</span>
-                                          )}
-                                        </div>
-                                        {/* 실제 정보 */}
-                                        <div className="flex flex-col gap-0.5">
-                                          <div className="flex items-center gap-1.5 font-bold text-[10px]" style={{ color: sc.bar }}>
-                                            <span className="w-1.5 h-1.5 rounded-sm" style={{ backgroundColor: sc.bar }} />
-                                            <span>실제 일정 ({row.status}: {actualProgress}%)</span>
-                                          </div>
-                                          {row.actual_start ? (
-                                            <span className="text-white font-medium pl-3">
-                                              {row.actual_start} ~ {row.actual_end} ({actualDays}일간)
-                                            </span>
-                                          ) : (
-                                            <span className="text-[#8b95a1] pl-3 italic">실제 일정 없음</span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-
-                                  return (
-                                    <>
-                                      {/* 계획 일정 바 (Plan Bar) */}
-                                      {posPlan && (
+                                {!isMilestoneRow && (
+                                  <>
+                                    {/* 계획 일정 바 (Plan Bar) */}
+                                    {posPlan && (() => {
+                                      const isNarrow = posPlan.width < 15;
+                                      const hasActual = !!posActual;
+                                      const barHeight = hasActual ? 'h-[11px]' : 'h-[16px]';
+                                      const topPos = hasActual ? 'top-[5px]' : 'top-[11px]';
+                                      
+                                      return (
                                         <div
-                                          className="absolute h-[18px] top-[10px] rounded-[4px] flex items-center group shadow-sm border border-[#cbd5e1] bg-[#f1f5f9] overflow-visible"
+                                          className={`absolute ${barHeight} ${topPos} rounded-[4px] flex items-center group/plan shadow-sm overflow-visible`}
                                           style={{
                                             left: `${posPlan.left}%`,
                                             width: `${posPlan.width}%`,
-                                            zIndex: 10
                                           }}
                                         >
-                                          {/* Progress bar */}
-                                          {row.plan_progress > 0 && (
-                                            <div
-                                              className="h-full transition-all duration-500 rounded-l-[3px]"
-                                              style={{
-                                                width: `${row.plan_progress}%`,
-                                                backgroundColor: '#cbd5e1'
-                                              }}
-                                            />
-                                          )}
-                                          
-                                          {/* 통합 툴팁 */}
-                                          {combinedTooltipText}
-                                        </div>
-                                      )}
+                                          {/* Progress bar wrapper with overflow-hidden */}
+                                          <div className="absolute inset-0 rounded-[4px] overflow-hidden pointer-events-none">
+                                            {/* Track background */}
+                                            <div className="absolute inset-0 bg-[#e2e8f0]" style={{ border: '1px solid #cbd5e1' }} />
+                                            {/* Progress bar */}
+                                            {row.plan_progress > 0 && (
+                                              <div
+                                                className="h-full transition-all duration-500"
+                                                style={{
+                                                  width: `${row.plan_progress}%`,
+                                                  backgroundColor: '#94a3b8'
+                                                }}
+                                              />
+                                            )}
+                                          </div>
  
-                                      {/* 실제 일정 바 (Actual Bar) */}
-                                      {posActual && (() => {
-                                        const hasPlan = !!posPlan;
-                                        const barHeight = hasPlan ? 'h-[10px]' : 'h-[16px]';
-                                        const topPos = hasPlan ? 'top-[14px]' : 'top-[11px]';
-                                        
-                                        return (
-                                          <div
-                                            className={`absolute ${barHeight} ${topPos} rounded-[4px] flex items-center group shadow-sm overflow-visible`}
+                                          {/* Text label */}
+                                          <span
+                                            className={`absolute font-bold text-[8px] select-none pointer-events-none ${isNarrow ? 'left-full ml-2 whitespace-nowrap text-[#64748b]' : 'left-1.5 truncate pr-1.5'}`}
                                             style={{
-                                              left: `${posActual.left}%`,
-                                              width: `${posActual.width}%`,
-                                              zIndex: 20
+                                              color: isNarrow ? '#64748b' : (row.plan_progress >= 50 ? '#fff' : '#475569')
                                             }}
                                           >
-                                            {/* Progress bar wrapper with overflow-hidden */}
-                                            <div className="absolute inset-0 rounded-[4px] overflow-hidden pointer-events-none">
-                                              {/* Track background */}
-                                              <div className="absolute inset-0" style={{ backgroundColor: sc.track, border: row.status === '미진행' ? '1px solid #e5e8eb' : 'none' }} />
-                                              {/* Progress bar */}
-                                              {row.status !== '미진행' && (
-                                                <div
-                                                  className="h-full transition-all duration-500"
-                                                  style={{
-                                                    width: `${actualProgress}%`,
-                                                    backgroundColor: sc.bar
-                                                  }}
-                                                />
-                                              )}
-                                            </div>
-                                            
-                                            {/* 통합 툴팁 */}
-                                            {combinedTooltipText}
+                                            계획: {row.plan_start ? fmtMDStr(row.plan_start) : ''}
+                                            {row.plan_start !== row.plan_end && ` ~ ${row.plan_end ? fmtMDStr(row.plan_end) : ''}`}
+                                            {` (${row.plan_progress}%)`}
+                                          </span>
+ 
+                                          {/* Tooltip */}
+                                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover/plan:block bg-[#191f28] text-white text-[11px] rounded-lg p-2.5 whitespace-nowrap z-50 shadow-xl border border-[#333d4b] leading-normal font-sans pointer-events-none">
+                                            <p className="font-bold text-[#64748b] mb-0.5">{taskText} (계획)</p>
+                                            <p className="text-white text-[10px] font-semibold">
+                                              계획 일정: {row.plan_start} ~ {row.plan_end} ({row.plan_start && row.plan_end ? getDiffDays(row.plan_start, row.plan_end) : 0}일간)
+                                            </p>
+                                            <p className="text-[10px] text-[#8b95a1] mt-1">
+                                              담당: {row.assignee || '—'} | 계획 진척율: {row.plan_progress}%
+                                            </p>
                                           </div>
-                                        );
-                                      })()}
-                                    </>
-                                  );
-                                })()}
+                                        </div>
+                                      );
+                                    })()}
+ 
+                                    {/* 실제 일정 바 (Actual Bar) */}
+                                    {posActual && (() => {
+                                      const isNarrow = posActual.width < 15;
+                                      const hasPlan = !!posPlan;
+                                      const barHeight = hasPlan ? 'h-[11px]' : 'h-[16px]';
+                                      const topPos = hasPlan ? 'top-[21px]' : 'top-[11px]';
+                                      const actualProgress = row.actual_progress ?? 0;
+                                      
+                                      return (
+                                        <div
+                                          className={`absolute ${barHeight} ${topPos} rounded-[4px] flex items-center group/actual shadow-sm overflow-visible`}
+                                          style={{
+                                            left: `${posActual.left}%`,
+                                            width: `${posActual.width}%`,
+                                          }}
+                                        >
+                                          {/* Progress bar wrapper with overflow-hidden */}
+                                          <div className="absolute inset-0 rounded-[4px] overflow-hidden pointer-events-none">
+                                            {/* Track background */}
+                                            <div className="absolute inset-0" style={{ backgroundColor: sc.track, border: row.status === '미진행' ? '1px solid #e5e8eb' : 'none' }} />
+                                            {/* Progress bar */}
+                                            {row.status !== '미진행' && (
+                                              <div
+                                                className="h-full transition-all duration-500"
+                                                style={{
+                                                  width: `${actualProgress}%`,
+                                                  backgroundColor: sc.bar
+                                                }}
+                                              />
+                                            )}
+                                          </div>
+ 
+                                          {/* Text label */}
+                                          <span
+                                            className={`absolute font-bold text-[8px] select-none pointer-events-none ${isNarrow ? 'left-full ml-2 whitespace-nowrap' : 'left-1.5 truncate pr-1.5'}`}
+                                            style={{
+                                              color: isNarrow ? sc.bar : (row.status === '완료' || (row.status === '진행중' && actualProgress >= 50) ? '#fff' : '#334155')
+                                            }}
+                                          >
+                                            실제: {row.actual_start ? fmtMDStr(row.actual_start) : ''}
+                                            {row.actual_start !== row.actual_end && ` ~ ${row.actual_end ? fmtMDStr(row.actual_end) : ''}`}
+                                            {` (${actualProgress}%)`}
+                                          </span>
+ 
+                                          {/* Tooltip */}
+                                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover/actual:block bg-[#191f28] text-white text-[11px] rounded-lg p-2.5 whitespace-nowrap z-50 shadow-xl border border-[#333d4b] leading-normal font-sans pointer-events-none">
+                                            <p className="font-bold text-[#22a06b] mb-0.5">{taskText} (실제)</p>
+                                            <p className="text-white text-[10px] font-semibold">
+                                              실제 일정: {row.actual_start} ~ {row.actual_end} ({row.actual_start && row.actual_end ? getDiffDays(row.actual_start, row.actual_end) : 0}일간)
+                                            </p>
+                                            <p className="text-[10px] text-[#8b95a1] mt-1">
+                                              담당: {row.assignee || '—'} | 상태: {row.status} | 실제 진척율: {actualProgress}%
+                                            </p>
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
+                                  </>
+                                )}
                               </div>
                             </div>
                           );

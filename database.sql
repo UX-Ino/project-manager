@@ -5,6 +5,7 @@ create table if not exists projects (
   slug           text unique not null,
   wbs_sheet_url  text,
   a11y_sheet_url text,
+  is_completed   boolean default false,
   created_at     timestamptz default now()
 );
 
@@ -128,4 +129,7 @@ create policy "Allow authenticated users on deploy_slides"
   to authenticated 
   using (true) 
   with check (true);
+
+-- 7. 기존 projects 테이블에 컬럼 추가 (마이그레이션용)
+alter table projects add column if not exists is_completed boolean default false;
 

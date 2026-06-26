@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d5dae3; border-radius: 4px; }
+</style>
+</helmet>
+<div style="display:flex; height:100vh; min-height:760px; background:#f4f6fa; color:#1a2233; overflow:hidden;">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside style="width:248px; flex-shrink:0; background:#ffffff; border-right:1px solid #e8ecf3; display:flex; flex-direction:column; padding:0; overflow-y:auto;">
+    <!-- Logo -->
+    <div style="display:flex; align-items:center; gap:11px; padding:20px 20px 18px;">
+      <div style="width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,#3b82f6,#2563eb); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(37,99,235,.28);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8 12l3 3 5-6"/></svg>
+      </div>
+      <div style="line-height:1.25;">
+        <div style="font-size:16px; font-weight:800; letter-spacing:-.02em; color:#101727;">Etribe PM</div>
+        <div style="font-size:11px; color:#8a93a6; font-weight:500;">웹 접근성 PM 툴</div>
+      </div>
+    </div>
+
+    <nav style="padding:6px 12px 24px; display:flex; flex-direction:column; gap:2px;">
+      <!-- 통합 현황판 (active top-level) -->
+      <a href="#" onClick="{{ noop }}" style="display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; background:#eef4ff; color:#2563eb; font-size:14px; font-weight:700; text-decoration:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        통합 현황판
+      </a>
+
+      <div style="font-size:10.5px; font-weight:700; letter-spacing:.08em; color:#a3abbb; padding:16px 12px 6px;">CHECKLIST &amp; WBS</div>
+
+      <a href="#" onClick="{{ noop }}" style="display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; background:#f5f8ff; color:#2f6bed; font-size:14px; font-weight:700; text-decoration:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M9 3.5h6V6H9z" fill="currentColor" stroke="none"/><path d="M9 11h6M9 15h4"/></svg>
+        프로젝트 체크리스트
+      </a>
+
+      <div style="display:flex; flex-direction:column; gap:1px; padding:2px 0 2px 18px;">
+        <a href="포지션별 가이드.dc.html" style="display:block; padding:8px 12px; border-radius:8px; color:#5a6478; font-size:13.5px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa; color:#2f3a4f;">포지션별 가이드</a>
+        <a href="WBS 일정표.dc.html" style="display:block; padding:8px 12px; border-radius:8px; color:#5a6478; font-size:13.5px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa; color:#2f3a4f;">WBS 일정표</a>
+        <a href="#" onClick="{{ noop }}" style="display:block; padding:8px 12px; border-radius:8px; color:#5a6478; font-size:13.5px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa; color:#2f3a4f;">접근성 점검리스트</a>
+        <a href="#" onClick="{{ noop }}" style="display:block; padding:8px 12px; border-radius:8px; color:#5a6478; font-size:13.5px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa; color:#2f3a4f;">배포리스트</a>
+        <a href="#" onClick="{{ noop }}" style="display:block; padding:8px 12px; border-radius:8px; color:#5a6478; font-size:13.5px; font-weight:600; text-decoration:none; border:1px solid #d3def5; background:#fbfcfe;">주간보고서 생성기</a>
+      </div>
+
+      <div style="font-size:10.5px; font-weight:700; letter-spacing:.08em; color:#a3abbb; padding:16px 12px 6px;">GENERAL</div>
+      <a href="#" onClick="{{ noop }}" style="display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; color:#4a5468; font-size:14px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+        산출물 보관함
+      </a>
+      <a href="#" onClick="{{ noop }}" style="display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; color:#4a5468; font-size:14px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        시스템 설정
+      </a>
+
+      <div style="font-size:10.5px; font-weight:700; letter-spacing:.08em; color:#a3abbb; padding:16px 12px 6px;">ADMIN</div>
+      <a href="#" onClick="{{ noop }}" style="display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; color:#4a5468; font-size:14px; font-weight:500; text-decoration:none;" style-hover="background:#f4f6fa;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        회원 관리
+      </a>
+    </nav>
+
+    <div style="margin-top:auto; padding:14px 16px; border-top:1px solid #eef1f6; display:flex; align-items:center; gap:10px;">
+      <div style="width:32px; height:32px; border-radius:50%; background:#dde7fb; color:#2563eb; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">인</div>
+      <div style="line-height:1.3; flex:1; min-width:0;">
+        <div style="font-size:13px; font-weight:700; color:#2a3346;">김인호</div>
+        <div style="font-size:11px; color:#9aa2b3;">PM · 접근성팀</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+
+    <!-- Top bar -->
+    <header style="display:flex; align-items:center; justify-content:space-between; padding:18px 28px; background:#ffffff; border-bottom:1px solid #e8ecf3; flex-shrink:0;">
+      <div>
+        <div style="font-size:19px; font-weight:800; letter-spacing:-.02em; color:#101727;">통합 현황판</div>
+        <div style="font-size:12.5px; color:#8a93a6; margin-top:2px;">{{ proj.client }} · 인증 마감 {{ proj.deadline }} · D-{{ proj.dday }}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; position:relative;">
+        <button onClick="{{ toggleDrop }}" style="display:flex; align-items:center; gap:10px; padding:9px 14px; background:#fff; border:1px solid #d8dee9; border-radius:10px; cursor:pointer; font-family:inherit; min-width:230px;" style-hover="border-color:#aab6cc;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#22a06b; flex-shrink:0;"></span>
+          <span style="font-size:13.5px; font-weight:700; color:#1f2a3d; flex:1; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ proj.name }}</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a93a6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <sc-if value="{{ dropOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; top:48px; right:0; width:300px; background:#fff; border:1px solid #e2e7f0; border-radius:12px; box-shadow:0 12px 30px rgba(28,40,64,.14); padding:6px; z-index:30;">
+            <sc-for list="{{ projects }}" as="p" hint-placeholder-count="3">
+              <button onClick="{{ p.select }}" style="display:flex; align-items:center; gap:10px; width:100%; padding:10px 11px; background:{{ p.bg }}; border:none; border-radius:8px; cursor:pointer; font-family:inherit; text-align:left;" style-hover="background:#f4f6fa;">
+                <span style="width:7px; height:7px; border-radius:50%; background:{{ p.dot }}; flex-shrink:0;"></span>
+                <span style="flex:1; min-width:0;">
+                  <span style="display:block; font-size:13px; font-weight:700; color:#22304a;">{{ p.name }}</span>
+                  <span style="display:block; font-size:11px; color:#9aa2b3;">{{ p.client }} · {{ p.statusLabel }}</span>
+                </span>
+                <sc-if value="{{ p.active }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </header>
+
+    <!-- Scroll body -->
+    <div style="flex:1; overflow-y:auto; padding:22px 28px 32px;">
+
+      <!-- KPI cards -->
+      <div style="display:grid; grid-template-columns:1fr 1.65fr 1fr; gap:18px; margin-bottom:18px;">
+
+        <!-- Card 1: WBS 진행률 -->
+        <section style="background:#fff; border:1px solid #e8ecf3; border-radius:14px; padding:20px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <div style="font-size:13.5px; font-weight:700; color:#3a4358;">전체 WBS 진행률</div>
+            <span style="font-size:11px; font-weight:700; color:#2563eb; background:#eef4ff; padding:3px 8px; border-radius:6px;">{{ wbs.total }}개 업무</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:18px;">
+            <div style="position:relative; width:104px; height:104px; flex-shrink:0;">{{ ring }}</div>
+            <div style="flex:1; display:flex; flex-direction:column; gap:9px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px;"><span style="color:#6b7488;"><span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#22a06b; margin-right:6px;"></span>완료</span><b style="color:#1f2a3d;">{{ wbs.done }}</b></div>
+              <div style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px;"><span style="color:#6b7488;"><span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#3b82f6; margin-right:6px;"></span>진행중</span><b style="color:#1f2a3d;">{{ wbs.prog }}</b></div>
+              <div style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px;"><span style="color:#6b7488;"><span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#e11d48; margin-right:6px;"></span>지연</span><b style="color:#e11d48;">{{ wbs.delayed }}</b></div>
+              <div style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px;"><span style="color:#6b7488;"><span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#cdd4e0; margin-right:6px;"></span>미착수</span><b style="color:#1f2a3d;">{{ wbs.notStarted }}</b></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card 2: 접근성 점검 현황 -->
+        <section style="background:#fff; border:1px solid #e8ecf3; border-radius:14px; padding:20px; display:flex; flex-direction:column;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <div style="font-size:13.5px; font-weight:700; color:#3a4358;">접근성 점검 현황 <span style="color:#9aa2b3; font-weight:500;">· KWCAG 2.2</span></div>
+            <div style="display:flex; gap:4px; background:#f2f4f9; padding:3px; border-radius:9px;">
+              <sc-for list="{{ platforms }}" as="pf" hint-placeholder-count="3">
+                <button onClick="{{ pf.select }}" style="padding:5px 13px; border:none; border-radius:7px; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:700; background:{{ pf.bg }}; color:{{ pf.color }}; box-shadow:{{ pf.shadow }};">{{ pf.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:flex-end; gap:10px; margin-bottom:14px;">
+            <div style="font-size:34px; font-weight:800; letter-spacing:-.02em; color:#101727; line-height:1;">{{ a11y.rate }}<span style="font-size:18px; color:#9aa2b3;">%</span></div>
+            <div style="font-size:12.5px; color:#6b7488; padding-bottom:4px;">통과율 · 총 {{ a11y.total }}개 항목</div>
+          </div>
+
+          <!-- stacked bar -->
+          <div style="display:flex; height:11px; border-radius:6px; overflow:hidden; margin-bottom:16px; background:#eef0f5;">
+            <div style="width:{{ a11y.passPct }}%; background:#22a06b;"></div>
+            <div style="width:{{ a11y.failPct }}%; background:#e11d48;"></div>
+            <div style="width:{{ a11y.naPct }}%; background:#f0a020;"></div>
+            <div style="width:{{ a11y.uncheckedPct }}%; background:#cdd4e0;"></div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:auto;">
+            <div style="background:#f0faf5; border:1px solid #d6eede; border-radius:10px; padding:11px 12px;"><div style="font-size:11.5px; color:#1a8a5a; font-weight:600; margin-bottom:3px;">통과</div><div style="font-size:21px; font-weight:800; color:#178055;">{{ a11y.pass }}</div></div>
+            <div style="background:#fdf1f3; border:1px solid #f6d6dd; border-radius:10px; padding:11px 12px;"><div style="font-size:11.5px; color:#c81e44; font-weight:600; margin-bottom:3px;">실패</div><div style="font-size:21px; font-weight:800; color:#d11d44;">{{ a11y.fail }}</div></div>
+            <div style="background:#fff7ec; border:1px solid #f7e3c2; border-radius:10px; padding:11px 12px;"><div style="font-size:11.5px; color:#c47e10; font-weight:600; margin-bottom:3px;">해당없음</div><div style="font-size:21px; font-weight:800; color:#bd7c12;">{{ a11y.na }}</div></div>
+            <div style="background:#f5f6f9; border:1px solid #e3e7ef; border-radius:10px; padding:11px 12px;"><div style="font-size:11.5px; color:#6b7488; font-weight:600; margin-bottom:3px;">미점검</div><div style="font-size:21px; font-weight:800; color:#4a5468;">{{ a11y.unchecked }}</div></div>
+          </div>
+        </section>
+
+        <!-- Card 3: 미완료 PM 체크리스트 -->
+        <section style="background:#fff; border:1px solid #e8ecf3; border-radius:14px; padding:20px; display:flex; flex-direction:column;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <div style="font-size:13.5px; font-weight:700; color:#3a4358;">미완료 PM 체크리스트</div>
+            <span style="font-size:11px; font-weight:700; color:#6b7488; background:#f2f4f9; padding:3px 8px; border-radius:6px;">{{ pm.done }}/{{ pm.total }} 완료</span>
+          </div>
+          <div style="display:flex; align-items:flex-end; gap:8px; margin-bottom:4px;">
+            <div style="font-size:44px; font-weight:800; letter-spacing:-.03em; color:#e11d48; line-height:.9;">{{ pm.pending }}</div>
+            <div style="font-size:13px; color:#6b7488; padding-bottom:6px;">건 미완료</div>
+          </div>
+          <div style="font-size:12px; color:#9aa2b3; margin-bottom:14px;">완료율 {{ pm.rate }}%</div>
+          <div style="display:flex; flex-direction:column; gap:9px; margin-top:auto;">
+            <sc-for list="{{ pm.phases }}" as="ph" hint-placeholder-count="4">
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span style="color:#5a6478; font-weight:600;">{{ ph.name }}</span><span style="color:#8a93a6;">{{ ph.done }}/{{ ph.total }}</span></div>
+                <div style="height:6px; background:#eef0f5; border-radius:3px; overflow:hidden;"><div style="width:{{ ph.pct }}%; height:100%; background:{{ ph.color }}; border-radius:3px;"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <!-- 이번 주 마감 WBS -->
+      <section style="background:#fff; border:1px solid #e8ecf3; border-radius:14px; overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #eef1f6;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="font-size:14.5px; font-weight:800; color:#101727;">이번 주 마감 WBS 항목</div>
+            <span style="font-size:11.5px; font-weight:700; color:#c81e44; background:#fdf1f3; padding:3px 9px; border-radius:20px;">마감 임박 {{ deadlineCount }}건</span>
+          </div>
+          <span style="font-size:12.5px; color:#9aa2b3;">06.22 — 06.28</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:96px 1fr 110px 120px 150px 96px; padding:11px 20px; background:#fafbfd; border-bottom:1px solid #eef1f6; font-size:11.5px; font-weight:700; color:#8a93a6; letter-spacing:.01em;">
+          <div>단계</div><div>업무</div><div>담당자</div><div>계획 완료일</div><div>진행률</div><div style="text-align:right;">상태</div>
+        </div>
+
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid; grid-template-columns:96px 1fr 110px 120px 150px 96px; align-items:center; padding:13px 20px; border-bottom:1px solid #f1f3f8; font-size:13px;" style-hover="background:#fafbfd;">
+            <div><span style="font-size:11.5px; font-weight:700; color:{{ r.phaseColor }}; background:{{ r.phaseBg }}; padding:3px 9px; border-radius:6px;">{{ r.phase }}</span></div>
+            <div style="font-weight:600; color:#22304a;">{{ r.task }}</div>
+            <div style="color:#5a6478;">{{ r.assignee }}</div>
+            <div style="color:#5a6478;">{{ r.due }} <span style="font-size:11px; font-weight:700; color:{{ r.ddayColor }};">{{ r.dday }}</span></div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="flex:1; height:6px; background:#eef0f5; border-radius:3px; overflow:hidden;"><div style="width:{{ r.progress }}%; height:100%; background:{{ r.barColor }}; border-radius:3px;"></div></div>
+              <span style="font-size:11.5px; font-weight:700; color:#5a6478; width:32px; text-align:right;">{{ r.progress }}%</span>
+            </div>
+            <div style="text-align:right;"><span style="font-size:11.5px; font-weight:700; color:{{ r.statusColor }}; background:{{ r.statusBg }}; padding:4px 10px; border-radius:20px;">{{ r.statusLabel }}</span></div>
+          </div>
+        </sc-for>
+      </section>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { projectIdx: 0, platform: 'web', dropOpen: false };
+
+  DATA = [
+    {
+      name: '롯데GRS 접근성 인증', client: '롯데GRS', statusLabel: '진행중', dot: '#22a06b',
+      deadline: '2026.07.31', dday: 37,
+      wbs: { total: 42, done: 19, prog: 14, delayed: 4, notStarted: 5, rate: 68 },
+      a11y: {
+        web:     { pass: 25, fail: 6, na: 2, unchecked: 0, total: 33 },
+        ios:     { pass: 18, fail: 4, na: 3, unchecked: 8, total: 33 },
+        android: { pass: 14, fail: 3, na: 4, unchecked: 12, total: 33 },
+      },
+      pm: { done: 17, total: 24, phases: [
+        { name: '착수', done: 5, total: 5 }, { name: '분석', done: 6, total: 6 },
+        { name: '구축', done: 4, total: 8 }, { name: '검수', done: 2, total: 5 },
+      ]},
+      rows: [
+        { phase: '구축', task: '상품 상세 키보드 네비게이션', assignee: '박서준', due: '06.24', dday: 'D-DAY', progress: 60, status: 'delayed' },
+        { phase: '구축', task: '메인 페이지 접근성 마크업', assignee: '김지훈', due: '06.25', dday: 'D-1', progress: 80, status: 'in_progress' },
+        { phase: '검수', task: 'PC웹 1차 점검 보고서 작성', assignee: '이수민', due: '06.26', dday: 'D-2', progress: 45, status: 'in_progress' },
+        { phase: '검수', task: '대체텍스트 일괄 검수', assignee: '이수민', due: '06.23', dday: 'D+1', progress: 30, status: 'delayed' },
+        { phase: '분석', task: 'iOS 스크린리더 시나리오 정의', assignee: '정민아', due: '06.27', dday: 'D-3', progress: 100, status: 'completed' },
+      ],
+    },
+    {
+      name: 'KB금융 모바일 접근성', client: 'KB금융지주', statusLabel: '진행중', dot: '#3b82f6',
+      deadline: '2026.08.20', dday: 57,
+      wbs: { total: 36, done: 9, prog: 11, delayed: 2, notStarted: 14, rate: 41 },
+      a11y: {
+        web:     { pass: 12, fail: 3, na: 2, unchecked: 16, total: 33 },
+        ios:     { pass: 20, fail: 5, na: 1, unchecked: 7, total: 33 },
+        android: { pass: 17, fail: 4, na: 2, unchecked: 10, total: 33 },
+      },
+      pm: { done: 9, total: 22, phases: [
+        { name: '착수', done: 5, total: 5 }, { name: '분석', done: 3, total: 6 },
+        { name: '구축', done: 1, total: 7 }, { name: '검수', done: 0, total: 4 },
+      ]},
+      rows: [
+        { phase: '분석', task: '모바일 앱 접근성 진단 설계', assignee: '정민아', due: '06.25', dday: 'D-1', progress: 55, status: 'in_progress' },
+        { phase: '착수', task: '킥오프 결과 공유 보고', assignee: '김인호', due: '06.24', dday: 'D-DAY', progress: 90, status: 'in_progress' },
+        { phase: '구축', task: 'Android TalkBack 대응 마크업', assignee: '박서준', due: '06.27', dday: 'D-3', progress: 20, status: 'in_progress' },
+        { phase: '분석', task: '대상 화면 범위 확정', assignee: '이수민', due: '06.22', dday: 'D+2', progress: 70, status: 'delayed' },
+      ],
+    },
+    {
+      name: '현대백화점 웹 리뉴얼', client: '현대백화점', statusLabel: '검수단계', dot: '#f0a020',
+      deadline: '2026.06.30', dday: 6,
+      wbs: { total: 48, done: 38, prog: 7, delayed: 1, notStarted: 2, rate: 86 },
+      a11y: {
+        web:     { pass: 29, fail: 2, na: 2, unchecked: 0, total: 33 },
+        ios:     { pass: 24, fail: 3, na: 4, unchecked: 2, total: 33 },
+        android: { pass: 22, fail: 2, na: 5, unchecked: 4, total: 33 },
+      },
+      pm: { done: 21, total: 26, phases: [
+        { name: '착수', done: 5, total: 5 }, { name: '분석', done: 6, total: 6 },
+        { name: '구축', done: 8, total: 9 }, { name: '검수', done: 2, total: 6 },
+      ]},
+      rows: [
+        { phase: '검수', task: '최종 접근성 인증 신청서 제출', assignee: '김인호', due: '06.26', dday: 'D-2', progress: 75, status: 'in_progress' },
+        { phase: '검수', task: '잔여 실패 항목 수정 검증', assignee: '이수민', due: '06.25', dday: 'D-1', progress: 60, status: 'in_progress' },
+        { phase: '구축', task: '푸터 영역 대비비 보정', assignee: '김지훈', due: '06.23', dday: 'D+1', progress: 40, status: 'delayed' },
+        { phase: '검수', task: '산출물 패키지 정리', assignee: '정민아', due: '06.28', dday: 'D-4', progress: 100, status: 'completed' },
+      ],
+    },
+  ];
+
+  PHASE_STYLE = {
+    '착수': { color: '#7c4dff', bg: '#f1ecff' }, '분석': { color: '#2563eb', bg: '#eaf1ff' },
+    '구축': { color: '#0d8a72', bg: '#e3f6f1' }, '검수': { color: '#c47e10', bg: '#fdf3e2' }, '종료': { color: '#5a6478', bg: '#eef0f5' },
+  };
+  STATUS_STYLE = {
+    completed:   { label: '완료',  color: '#178055', bg: '#e6f6ee' },
+    in_progress: { label: '진행중', color: '#2563eb', bg: '#eaf1ff' },
+    delayed:     { label: '지연',  color: '#d11d44', bg: '#fdeaee' },
+    not_started: { label: '미착수', color: '#5a6478', bg: '#eef0f5' },
+  };
+
+  renderVals() {
+    const d = this.DATA[this.state.projectIdx];
+    const phaseColors = ['#7c4dff', '#2563eb', '#0d8a72', '#c47e10'];
+
+    // WBS ring
+    const rate = d.wbs.rate;
+    const r = 44, c = 2 * Math.PI * r;
+    const ring = React.createElement('svg', { width: 104, height: 104, viewBox: '0 0 104 104' },
+      React.createElement('circle', { cx: 52, cy: 52, r, fill: 'none', stroke: '#eef0f5', strokeWidth: 11 }),
+      React.createElement('circle', { cx: 52, cy: 52, r, fill: 'none', stroke: '#2563eb', strokeWidth: 11,
+        strokeLinecap: 'round', strokeDasharray: c, strokeDashoffset: c * (1 - rate / 100),
+        transform: 'rotate(-90 52 52)', style: { transition: 'stroke-dashoffset .6s ease' } }),
+      React.createElement('text', { x: 52, y: 50, textAnchor: 'middle', fontSize: 24, fontWeight: 800, fill: '#101727' }, rate + '%'),
+      React.createElement('text', { x: 52, y: 67, textAnchor: 'middle', fontSize: 10.5, fill: '#9aa2b3', fontWeight: 600 }, '진행률'),
+    );
+
+    // a11y for selected platform
+    const a = d.a11y[this.state.platform];
+    const t = a.total;
+    const a11y = {
+      pass: a.pass, fail: a.fail, na: a.na, unchecked: a.unchecked, total: t,
+      rate: Math.round((a.pass / t) * 100),
+      passPct: (a.pass / t) * 100, failPct: (a.fail / t) * 100, naPct: (a.na / t) * 100, uncheckedPct: (a.unchecked / t) * 100,
+    };
+
+    const platforms = [
+      { key: 'web', label: 'PC 웹' }, { key: 'ios', label: 'iOS' }, { key: 'android', label: 'Android' },
+    ].map(p => {
+      const on = this.state.platform === p.key;
+      return { label: p.label, select: () => this.setState({ platform: p.key }),
+        bg: on ? '#fff' : 'transparent', color: on ? '#2563eb' : '#7b8499',
+        shadow: on ? '0 1px 3px rgba(28,40,64,.12)' : 'none' };
+    });
+
+    const pm = {
+      done: d.pm.done, total: d.pm.total, pending: d.pm.total - d.pm.done,
+      rate: Math.round((d.pm.done / d.pm.total) * 100),
+      phases: d.pm.phases.map((p, i) => ({
+        name: p.name, done: p.done, total: p.total,
+        pct: Math.round((p.done / p.total) * 100),
+        color: p.done === p.total ? '#22a06b' : phaseColors[i % phaseColors.length],
+      })),
+    };
+
+    const rows = d.rows.map(row => {
+      const ps = this.PHASE_STYLE[row.phase] || this.PHASE_STYLE['종료'];
+      const ss = this.STATUS_STYLE[row.status];
+      const overdue = row.dday.startsWith('D+');
+      const today = row.dday === 'D-DAY';
+      return {
+        phase: row.phase, task: row.task, assignee: row.assignee, due: row.due,
+        dday: row.dday, ddayColor: overdue ? '#d11d44' : (today ? '#d11d44' : '#9aa2b3'),
+        progress: row.progress, barColor: row.status === 'delayed' ? '#e11d48' : (row.status === 'completed' ? '#22a06b' : '#3b82f6'),
+        phaseColor: ps.color, phaseBg: ps.bg,
+        statusLabel: ss.label, statusColor: ss.color, statusBg: ss.bg,
+      };
+    });
+    const deadlineCount = d.rows.filter(x => x.dday === 'D-DAY' || x.dday.startsWith('D+') || x.dday === 'D-1').length;
+
+    const projects = this.DATA.map((p, i) => ({
+      name: p.name, client: p.client, statusLabel: p.statusLabel, dot: p.dot,
+      active: i === this.state.projectIdx, bg: i === this.state.projectIdx ? '#f5f8ff' : 'transparent',
+      select: () => this.setState({ projectIdx: i, platform: 'web', dropOpen: false }),
+    }));
+
+    return {
+      noop: (e) => { if (e && e.preventDefault) e.preventDefault(); },
+      toggleDrop: () => this.setState(s => ({ dropOpen: !s.dropOpen })),
+      dropOpen: this.state.dropOpen,
+      projects,
+      proj: { name: d.name, client: d.client, deadline: d.deadline, dday: d.dday },
+      wbs: d.wbs, ring, a11y, platforms, pm, rows, deadlineCount,
+    };
+  }
+}
+</script>
+</body>
+</html>

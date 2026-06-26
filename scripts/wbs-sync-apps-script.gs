@@ -31,7 +31,7 @@
 
 var CONFIG = {
   // 배포된 앱 API 주소 또는 ngrok 터널 주소
-  API_ENDPOINT: "https://050ccbebcb1277.lhr.life/api/wbs-sync",
+  API_ENDPOINT: "https://project-manager-topaz-omega.vercel.app/api/wbs-sync",
 
   // .env.local 의 WBS_SYNC_SECRET 값
   SYNC_SECRET: "220497c27a8c9051f6518a6743a0e6689f3e2f043ff66f82181c0be5737da604",
@@ -81,6 +81,11 @@ function syncWbsToSupabase() {
   var rows = readWbsRows(sheet);
   Logger.log("[WBS Sync] 읽은 행 수: " + rows.length);
 
+  // 3.1. 주차 데이터 읽기 (Q10:U10 다음부터)
+  Logger.log("[WBS Sync] 주차 헤더 데이터 읽기 시작...");
+  var weeks = readWbsWeeks(sheet);
+  Logger.log("[WBS Sync] 읽은 주차 수: " + weeks.length);
+
   if (rows.length === 0) {
     showAlert("동기화 취소", "동기화할 유효한 데이터가 없습니다.");
     return;
@@ -88,7 +93,7 @@ function syncWbsToSupabase() {
 
   // 4. Next.js API로 동기화 전송
   Logger.log("[WBS Sync] API 서버로 동기화 요청 중...");
-  var result = callSyncApi(rows);
+  var result = callSyncApi(rows, weeks);
 
   if (result.success) {
     Logger.log("[WBS Sync] 성공: " + result.message);
@@ -155,9 +160,9 @@ function readWbsRows(sheet) {
     var rowId = parseInt(row[COL.ROW_ID]);
     if (isNaN(rowId) || rowId <= 0) continue;
 
-    // 레벨이 1~4 범위 밖이면 스킵
+    // 레벨이 1 미만이면 스킵 (상한선 제거하여 5레벨 이상 지원)
     var level = parseInt(row[COL.LEVEL]);
-    if (isNaN(level) || level < 1 || level > 4) continue;
+    if (isNaN(level) || level < 1) continue;
 
     rows.push({
       row_order: rowId,
@@ -165,7 +170,7 @@ function readWbsRows(sheet) {
       task_l1: parseText(row[COL.TASK_L1]),
       task_l2: parseText(row[COL.TASK_L2]),
       task_l3: parseText(row[COL.TASK_L3]),
-      task_l4: parseText(row[COL.TASK_L4]),
+      task_l4: level >= 4 ? parseText(row[COL.TASK_L4]) : null,
       description: parseText(row[COL.DESCRIPTION]),
       assignee: parseText(row[COL.ASSIGNEE]),
       status: parseStatus(row[COL.STATUS]),
@@ -181,13 +186,14 @@ function readWbsRows(sheet) {
   return rows;
 }
 
-function callSyncApi(rows) {
+function callSyncApi(rows, weeks) {
   var activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var sheetUrl = activeSpreadsheet.getUrl();
 
   var payload = JSON.stringify({
     sheet_url: sheetUrl,
     rows: rows,
+    weeks: weeks || []
   });
 
   var options = {
@@ -340,4 +346,32 @@ function onOpen() {
   } catch (e) {
     Logger.log("메뉴 생성 실패 (UI를 지원하지 않는 환경입니다): " + e.message);
   }
+}
+
+/**
+ * 10행 Q열(Q10)부터 가로로 나열된 주차 정보와 11행의 날짜 범위를 수집합니다.
+ */
+function readWbsWeeks(sheet) {
+  var lastCol = sheet.getLastColumn();
+  var startCol = 17; // Q열 (1-indexed)
+  if (lastCol < startCol) return [];
+
+  var timelineWeeks = [];
+  // 10행(주차 레이블)과 11행(날짜 범위) 영역
+  var range = sheet.getRange(10, startCol, 2, lastCol - startCol + 1);
+  var values = range.getValues(); // values[0]은 10행, values[1]은 11행
+
+  for (var i = 0; i < values[0].length; i++) {
+    var label = String(values[0][i]).trim();
+    var dateRange = String(values[1][i]).trim();
+
+    if (label && label !== "" && label !== "—") {
+      timelineWeeks.push({
+        week_num: i + 1,
+        label: label,
+        date_range: dateRange || ""
+      });
+    }
+  }
+  return timelineWeeks;
 }

@@ -24,6 +24,7 @@ interface WbsRowPayload {
 interface SyncPayload {
   sheet_url: string;
   rows: WbsRowPayload[];
+  weeks?: { week_num: number; label: string; date_range: string }[];
 }
 
 // ─── 유효성 검사 헬퍼 ───────────────────────────────────────────────────────
@@ -38,7 +39,7 @@ function isValidRow(row: WbsRowPayload): boolean {
   return (
     typeof row.row_order === 'number' &&
     typeof row.level === 'number' &&
-    row.level >= 1 && row.level <= 4 &&
+    row.level >= 1 &&
     ['미진행', '진행중', '완료'].includes(row.status) &&
     typeof row.plan_progress === 'number' &&
     typeof row.actual_progress === 'number'
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { sheet_url, rows } = body;
+    const { sheet_url, rows, weeks } = body;
 
     // 3. sheet_url 검증 및 Spreadsheet ID 추출
     if (!sheet_url) {
@@ -181,6 +182,18 @@ export async function POST(req: NextRequest) {
         { error: `데이터 삽입 실패: ${insertError.message}` },
         { status: 500 }
       );
+    }
+
+    // 7.1. 주차 정보가 전달된 경우 projects 테이블의 wbs_weeks에 업데이트
+    if (weeks && Array.isArray(weeks)) {
+      const { error: updateProjectError } = await supabase
+        .from('projects')
+        .update({ wbs_weeks: weeks })
+        .eq('id', project_id);
+      
+      if (updateProjectError) {
+        console.error('[wbs-sync] 프로젝트 주차 업데이트 실패:', updateProjectError);
+      }
     }
 
     return NextResponse.json({

@@ -46,7 +46,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main container */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden md:pl-64">
         {/* Top Header bar */}
         <Header onMenuToggle={() => setIsSidebarOpen(prev => !prev)} />
 
