@@ -1032,9 +1032,23 @@ export default function ProjectWbsPage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-3 text-[11px] font-semibold text-[#5a6478]">
-                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-[#22a06b]"></span><span>실제 일정</span></div>
-                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-[#cbd5e1]"></span><span>계획 일정</span></div>
-                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-[#7c4dff] rotate-45 rounded-[2px]"></span><span>마일스톤</span></div>                    
+                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-[#22a06b]"></span><span>완료</span></div>
+                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-[#3b82f6]"></span><span>진행중</span></div>
+                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-[#cbd5e1]"></span><span>미진행</span></div>
+                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-[#7c4dff] rotate-45 rounded-[2px]"></span><span>마일스톤</span></div>
+                    
+                    <div className="w-[1px] h-3 bg-[#e5e8eb] mx-1" />
+                    
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3.5 h-3 rounded border border-[#cbd5e1] bg-[#f1f5f9]" />
+                      <span>계획 일정</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="relative w-3.5 h-3 rounded border border-[#cbd5e1] bg-[#f1f5f9] flex items-center justify-center">
+                        <span className="absolute w-2.5 h-1 rounded-sm bg-[#3b82f6]" />
+                      </div>
+                      <span>실제 일정 (겹침)</span>
+                    </div>
                   </div>
                   
                   {/* 아코디언 일괄 제어 */}
@@ -1387,36 +1401,8 @@ export default function ProjectWbsPage() {
         }
 
         return (
-          <div className="rounded-2xl overflow-hidden bg-white shadow-sm border border-[#e5e8eb] flex flex-col">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-[#eef1f6] bg-[#fafbfd] shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-[#101727]">프로젝트 WBS 상세 목록 (테이블)</span>
-                <span className="text-[11px] text-[#9aa2b3] font-semibold">총 {wbsRows.length}개 항목</span>
-              </div>
-              <div className="flex items-center gap-4">
-                {/* 아코디언 일괄 제어 */}
-                <div className="flex bg-[#eaedf3] rounded-lg p-0.5 gap-0.5 select-none">
-                  <button 
-                    onClick={() => {
-                      const allCollapsibleIds = wbsRows
-                        .filter((_, idx) => hasChildren(idx))
-                        .map(r => r.id);
-                      setCollapsedRowIds(new Set(allCollapsibleIds));
-                    }}
-                    className="px-2 py-1 text-[10px] font-bold rounded-md bg-white hover:bg-[#f1f3f7] text-[#4e5968] cursor-pointer shadow-[0_1px_2px_rgba(28,40,64,0.08)] transition-all"
-                  >
-                    모두 접기
-                  </button>
-                  <button 
-                    onClick={() => setCollapsedRowIds(new Set())}
-                    className="px-2 py-1 text-[10px] font-bold rounded-md hover:bg-white hover:shadow-[0_1px_2px_rgba(28,40,64,0.08)] text-[#7b8499] hover:text-[#2563eb] cursor-pointer transition-all"
-                  >
-                    모두 펴기
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 290px)' }}>
+          <div className="rounded-2xl overflow-hidden bg-white shadow-sm border border-[#e5e8eb]">
+            <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
               <table className="w-full text-left border-collapse text-xs min-w-[980px]" style={{ tableLayout: 'fixed' }}>
                 <colgroup>
                   <col style={{ width: '42px' }} />
