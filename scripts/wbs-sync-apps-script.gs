@@ -164,14 +164,25 @@ function readWbsRows(sheet) {
     var level = parseInt(row[COL.LEVEL]);
     if (isNaN(level) || level < 1) continue;
 
+    var task_l1 = parseText(row[COL.TASK_L1]);
+    var task_l2 = parseText(row[COL.TASK_L2]);
+    var task_l3 = parseText(row[COL.TASK_L3]);
+    var task_l4 = level >= 4 ? parseText(row[COL.TASK_L4]) : null;
+    var description = parseText(row[COL.DESCRIPTION]);
+
+    if (level >= 5 && !task_l4 && description) {
+      task_l4 = description;
+      description = null;
+    }
+
     rows.push({
       row_order: rowId,
       level: level,
-      task_l1: parseText(row[COL.TASK_L1]),
-      task_l2: parseText(row[COL.TASK_L2]),
-      task_l3: parseText(row[COL.TASK_L3]),
-      task_l4: level >= 4 ? parseText(row[COL.TASK_L4]) : null,
-      description: parseText(row[COL.DESCRIPTION]),
+      task_l1: task_l1,
+      task_l2: task_l2,
+      task_l3: task_l3,
+      task_l4: task_l4,
+      description: description,
       assignee: parseText(row[COL.ASSIGNEE]),
       status: parseStatus(row[COL.STATUS]),
       plan_start: parseDate(row[COL.PLAN_START]),

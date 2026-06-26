@@ -1131,7 +1131,7 @@ export default function ProjectWbsPage() {
                         const rowHasChildren = hasChildren(idx);
                         
                         const isL1 = row.level === 1;
-                        const taskText = row.task_l1 || row.task_l2 || row.task_l3 || row.task_l4 || '';
+                        const taskText = row.task_l1 || row.task_l2 || row.task_l3 || row.task_l4 || (row.level >= 5 ? row.description : null) || '';
                         
                         if (isL1) {
                           phaseIndex++;
@@ -1509,7 +1509,7 @@ export default function ProjectWbsPage() {
                     const isL1 = row.level === 1;
                     const isL2 = row.level === 2;
                     const isL3 = row.level === 3;
-                    const taskText = row.task_l1 || row.task_l2 || row.task_l3 || row.task_l4 || '';
+                    const taskText = row.task_l1 || row.task_l2 || row.task_l3 || row.task_l4 || (row.level >= 5 ? row.description : null) || '';
                     const indentPx = Math.max(0, row.level - 1) * 14;
 
                     let rowBg = '#ffffff';

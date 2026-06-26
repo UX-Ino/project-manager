@@ -165,12 +165,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 7. 새 데이터 삽입
-    const insertData = rows.map(row => ({
-      ...row,
-      project_id,
-      updated_at: new Date().toISOString(),
-    }));
+    const insertData = rows.map(row => {
+      let task_l4 = row.task_l4;
+      let description = row.description;
+      if (row.level >= 5 && !task_l4 && description) {
+        task_l4 = description;
+        description = null;
+      }
+      return {
+        ...row,
+        task_l4,
+        description,
+        project_id,
+        updated_at: new Date().toISOString(),
+      };
+    });
 
     const { error: insertError, count } = await supabase
       .from('wbs_rows')
