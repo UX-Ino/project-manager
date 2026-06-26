@@ -42,3 +42,6 @@ next-env.d.ts
 
 # hookify local rules (agent-specific, not shared via git)
 .claude/*.local.md
+
+# editor history
+.history/

@@ -6,6 +6,7 @@ import { useProject } from '../../../../context/ProjectContext';
 import { supabase } from '../../../../lib/supabaseClient';
 import { FileSpreadsheet, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
 import { ImageViewerModal } from '../../../../components/Modals';
+import { createPortal } from 'react-dom';
 
 interface ChecklistItem {
   id: string;
@@ -43,6 +44,9 @@ export default function ProjectA11yPage() {
 
   const [viewerImageUrl, setViewerImageUrl] = useState('');
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+
+  const [selectedA11yItem, setSelectedA11yItem] = useState<ChecklistItem | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Sync Input when project load or change
   useEffect(() => {
@@ -275,14 +279,6 @@ export default function ProjectA11yPage() {
                   >
                     연동 및 저장
                   </button>
-                  {hasUrl && (
-                    <button 
-                      onClick={() => setEditingA11ySheetUrl(false)} 
-                      className="px-4 py-2 bg-[#f2f4f6] hover:bg-[#e5e8eb] text-[#4e5968] text-xs font-semibold rounded-lg cursor-pointer transition-colors"
-                    >
-                      취소
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
@@ -292,13 +288,13 @@ export default function ProjectA11yPage() {
         // 1. 대시보드 뷰
         if (a11yViewMode === 'dashboard') {
           const uniquePages = new Set<string>();
+          let verifiedCount = 0;
+          let actionCompletedCount = 0;
+          let fixCompletedCount = 0;
+          let fixingCount = 0;
+          let unfixedCount = 0;
           let totalViolations = 0;
-          let unfixedCount = 0;          // 조치필요
-          let fixingCount = 0;           // 수정중
-          let fixCompletedCount = 0;     // 수정완료
-          let actionCompletedCount = 0;  // 조치완료
-          let verifiedCount = 0;         // 검수완료
-
+          
           let recognition = 0;
           let operation = 0;
           let understanding = 0;
@@ -316,6 +312,16 @@ export default function ProjectA11yPage() {
 
           const getA11yItemStatus = (item: ChecklistItem): string => {
             const tagStr = (item.tag || '').trim();
+            let checkStatus = '';
+            if (item.memo) {
+              try {
+                const parsed = JSON.parse(item.memo);
+                checkStatus = parsed.check_status || '';
+              } catch {}
+            }
+            if (checkStatus.includes('현행유지') || checkStatus.includes('현행 유지')) {
+              return '현행유지';
+            }
             if (tagStr.includes('검수완료') || tagStr.includes('검수 완료') || item.checked) {
               return '검수완료';
             } else if (tagStr.includes('조치완료') || tagStr.includes('조치 완료')) {
@@ -330,12 +336,14 @@ export default function ProjectA11yPage() {
           };
 
           a11yItems.forEach(item => {
-            // 페이지명 수집
+            // 페이지명 수집 및 점검상태(check_status) 확인
             let pageName = '';
+            let checkStatus = '';
             if (item.memo) {
               try {
                 const parsed = JSON.parse(item.memo);
                 pageName = parsed.page_name || '';
+                checkStatus = parsed.check_status || '';
               } catch {
                 // Ignore
               }
@@ -347,19 +355,22 @@ export default function ProjectA11yPage() {
               uniquePages.add(item.group_name);
             }
 
-            // 상태 분류 (O열 tag 값 기반 분류)
-            const tagStr = (item.tag || '').trim();
+            const isMaintainCurrent = checkStatus.includes('현행유지') || checkStatus.includes('현행 유지');
 
-            if (tagStr.includes('검수완료') || tagStr.includes('검수 완료') || item.checked) {
-              verifiedCount++;
-            } else if (tagStr.includes('조치완료') || tagStr.includes('조치 완료')) {
-              actionCompletedCount++;
-            } else if (tagStr.includes('수정완료') || tagStr.includes('수정 완료')) {
-              fixCompletedCount++;
-            } else if (tagStr.includes('수정중') || tagStr.includes('수정 중') || tagStr.includes('진행')) {
-              fixingCount++;
-            } else {
-              unfixedCount++; // 조치필요, 대기 등
+            // 상태 분류 (O열 tag 값 기반 분류) - 현행유지는 5대 지표 및 퍼센트 계산에서 제외
+            if (!isMaintainCurrent) {
+              const tagStr = (item.tag || '').trim();
+              if (tagStr.includes('검수완료') || tagStr.includes('검수 완료') || item.checked) {
+                verifiedCount++;
+              } else if (tagStr.includes('조치완료') || tagStr.includes('조치 완료')) {
+                actionCompletedCount++;
+              } else if (tagStr.includes('수정완료') || tagStr.includes('수정 완료')) {
+                fixCompletedCount++;
+              } else if (tagStr.includes('수정중') || tagStr.includes('수정 중') || tagStr.includes('진행')) {
+                fixingCount++;
+              } else {
+                unfixedCount++; // 조치필요, 대기 등
+              }
             }
 
             // depth(group_name)별 그룹화 추가
@@ -373,7 +384,8 @@ export default function ProjectA11yPage() {
                   '수정중': 0,
                   '수정완료': 0,
                   '조치완료': 0,
-                  '검수완료': 0
+                  '검수완료': 0,
+                  '현행유지': 0
                 },
                 total: 0,
                 progress: 0,
@@ -385,17 +397,21 @@ export default function ProjectA11yPage() {
               }
             }
             depthGroups[group].items.push(item);
-            depthGroups[group].total++;
+            
             const itemStatus = getA11yItemStatus(item);
             if (depthGroups[group].counts[itemStatus] !== undefined) {
               depthGroups[group].counts[itemStatus]++;
             }
 
-            // 원칙별 위반 계산
-            if (!item.checked) {
-              totalViolations++;
+            // 현행유지가 아닌 경우에만 진척도 계산 대상(total)에 포함
+            if (!isMaintainCurrent) {
+              depthGroups[group].total++;
+            }
 
-              const match = item.text.match(/^(\d+)/);
+            // 원칙별 위반 계산 - 현행유지가 아니고 checked가 false인 경우만 위반으로 판단
+            if (!isMaintainCurrent && !item.checked) {
+              totalViolations++;
+              const match = item.text.match(/(\d+)/);
               if (match) {
                 const num = parseInt(match[1], 10);
                 if (num >= 1 && num <= 9) {
@@ -428,16 +444,18 @@ export default function ProjectA11yPage() {
 
           // 각 그룹별 진척도 계산 및 세부 정렬
           Object.values(depthGroups).forEach(g => {
-            g.progress = g.total > 0 ? Math.round((g.counts['검수완료'] / g.total) * 100) : 0;
+            // '검수완료'와 '조치완료'를 합쳐서 최종 완료 진척도로 반영 (분모가 0이면 100%)
+            g.progress = g.total > 0 ? Math.round(((g.counts['검수완료'] + g.counts['조치완료']) / g.total) * 100) : 100;
             if (a11ySortBy === 'sheet') {
               g.items.sort((a, b) => (a.sort_order ?? 999999) - (b.sort_order ?? 999999));
             } else {
               const statusOrderLocal: Record<string, number> = {
-                '조치필요': 1,
+                '검수완료': 1,
                 '수정중': 2,
                 '수정완료': 3,
-                '조치완료': 4,
-                '검수완료': 5
+                '조치필요': 4,
+                '조치완료': 5,
+                '현행유지': 6
               };
               g.items.sort((a, b) => {
                 const statusA = getA11yItemStatus(a);
@@ -621,14 +639,21 @@ export default function ProjectA11yPage() {
                               }
 
                               return (
-                                <div key={subIdx} className="py-2.5 flex items-start justify-between gap-4 text-xs">
+                                <div 
+                                  key={subIdx} 
+                                  onClick={() => {
+                                    setSelectedA11yItem(item);
+                                    setIsDetailModalOpen(true);
+                                  }}
+                                  className="py-2.5 flex items-start justify-between gap-4 text-xs cursor-pointer hover:bg-[#f9fafb] transition-colors px-2 rounded-lg"
+                                >
                                   <div className="space-y-1 min-w-0 flex-1">
                                     <div className="flex items-start gap-1.5 flex-wrap">
                                       <span className="font-extrabold text-[#8b95a1] w-4 text-right shrink-0">
                                         {item.sort_order || subIdx + 1}
                                       </span>
                                       <span className={`font-bold text-[#191f28] ${item.checked ? 'line-through text-[#8b95a1]' : ''}`}>
-                                        {item.text}
+                                        {formatA11yText(item.text)}
                                       </span>
                                       {item.assignee && (
                                         <span className="px-1.5 py-0.5 bg-[#f2f4f6] text-[#4e5968] rounded text-[10px] shrink-0 font-medium">
@@ -652,7 +677,10 @@ export default function ProjectA11yPage() {
                                     {/* 증빙 이미지 보기 버튼 */}
                                     {item.image_url && (
                                       <button
-                                        onClick={() => handleViewImage(item.image_url!)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleViewImage(item.image_url!);
+                                        }}
                                         className="px-2 py-0.5 text-[9px] bg-[#eff6ff] text-[#3182f6] hover:bg-[#3182f6] hover:text-white rounded border border-[#3182f6]/20 transition-all font-semibold cursor-pointer"
                                       >
                                         증빙 ↗
@@ -732,6 +760,16 @@ export default function ProjectA11yPage() {
 
         const getA11yItemStatus = (item: ChecklistItem): string => {
           const tagStr = (item.tag || '').trim();
+          let checkStatus = '';
+          if (item.memo) {
+            try {
+              const parsed = JSON.parse(item.memo);
+              checkStatus = parsed.check_status || '';
+            } catch {}
+          }
+          if (checkStatus.includes('현행유지') || checkStatus.includes('현행 유지')) {
+            return '현행유지';
+          }
           if (tagStr.includes('검수완료') || tagStr.includes('검수 완료') || item.checked) {
             return '검수완료';
           } else if (tagStr.includes('조치완료') || tagStr.includes('조치 완료')) {
@@ -746,11 +784,12 @@ export default function ProjectA11yPage() {
         };
 
         const statusOrder: Record<string, number> = {
-          '조치필요': 1,
+          '검수완료': 1,
           '수정중': 2,
           '수정완료': 3,
-          '조치완료': 4,
-          '검수완료': 5
+          '조치필요': 4,
+          '조치완료': 5,
+          '현행유지': 6
         };
 
         const sortedA11yItems = [...a11yItems].sort((a, b) => {
@@ -771,7 +810,8 @@ export default function ProjectA11yPage() {
           '수정중': 0,
           '수정완료': 0,
           '조치완료': 0,
-          '검수완료': 0
+          '검수완료': 0,
+          '현행유지': 0
         };
 
         a11yItems.forEach(item => {
@@ -796,7 +836,8 @@ export default function ProjectA11yPage() {
                 { key: '수정중', label: '수정중', count: statusCounts['수정중'], activeBg: 'bg-[#1a73e8]', activeText: 'text-white' },
                 { key: '수정완료', label: '수정완료', count: statusCounts['수정완료'], activeBg: 'bg-[#b06000]', activeText: 'text-white' },
                 { key: '조치완료', label: '조치완료', count: statusCounts['조치완료'], activeBg: 'bg-[#7e22ce]', activeText: 'text-white' },
-                { key: '검수완료', label: '검수완료', count: statusCounts['검수완료'], activeBg: 'bg-[#137333]', activeText: 'text-white' }
+                { key: '검수완료', label: '검수완료', count: statusCounts['검수완료'], activeBg: 'bg-[#137333]', activeText: 'text-white' },
+                { key: '현행유지', label: '현행유지', count: statusCounts['현행유지'], activeBg: 'bg-[#4e5968]', activeText: 'text-white' }
               ].map(tab => {
                 const isActive = a11yStatusFilter === tab.key;
                 return (
@@ -822,15 +863,15 @@ export default function ProjectA11yPage() {
               <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
                 <table className="w-full text-left border-collapse" style={{ fontSize: '12px', minWidth: '1050px', tableLayout: 'fixed' }}>
                   <colgroup>
-                    <col style={{ width: '55px' }} />
-                    <col style={{ width: '150px' }} />
-                    <col style={{ width: '180px' }} />
-                    <col style={{ width: '220px' }} />
-                    <col style={{ width: '80px' }} />
-                    <col style={{ width: '90px' }} />
-                    <col style={{ width: '90px' }} />
-                    <col style={{ width: '75px' }} />
-                    <col style={{ width: '180px' }} />
+                    <col style={{ width: '35px' }} />
+                    <col style={{ width: '100px' }} />
+                    <col style={{ width: '170px' }} />
+                    <col style={{ width: '50px' }} />
+                    <col style={{ width: '50px' }} />
+                    <col style={{ width: '50px' }} />
+                    <col style={{ width: '50px' }} />
+                    <col style={{ width: '50px' }} />
+                    <col style={{ width: '50px' }} />
                   </colgroup>
                   <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                     <tr style={{ backgroundColor: '#1a3a5c', color: '#ffffff', borderBottom: '2px solid #0f2b47' }}>
@@ -839,10 +880,10 @@ export default function ProjectA11yPage() {
                       <th className="py-2.5 px-3 font-bold" style={{ fontSize: '11px', borderRight: '1px solid #2d5a8e' }}>지침명</th>
                       <th className="py-2.5 px-3 font-bold" style={{ fontSize: '11px', borderRight: '1px solid #2d5a8e' }}>오류사항</th>
                       <th className="py-2.5 px-3 font-bold text-center" style={{ fontSize: '11px', borderRight: '1px solid #2d5a8e' }}>담당자</th>
-                      <th className="py-2.5 px-3 font-bold text-center" style={{ fontSize: '11px', borderRight: '1px solid #2d5a8e' }}>배포상태</th>
+                      <th className="py-2.5 px-3 font-bold text-center" style={{ fontSize: '11px', borderRight: '1px solid #2d5a8e' }}>조치일</th>
+                      <th className="py-2.5 px-3 font-bold text-center" style={{ fontSize: '11px', borderRight: '1px solid #2d5a8e' }}>상태</th>
                       <th className="py-2.5 px-3 font-bold text-center" style={{ fontSize: '11px', borderRight: '1px solid #2d5a8e' }}>점검상태</th>
-                      <th className="py-2.5 px-3 font-bold text-center" style={{ fontSize: '11px', borderRight: '1px solid #2d5a8e' }}>이미지</th>
-                      <th className="py-2.5 px-3 font-bold text-center" style={{ fontSize: '11px' }}>비고</th>
+                      <th className="py-2.5 px-3 font-bold text-center" style={{ fontSize: '11px' }}>이미지</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#e5e8eb]">
@@ -872,7 +913,15 @@ export default function ProjectA11yPage() {
                       }
 
                       return (
-                        <tr key={item.id} style={{ backgroundColor: rowBg, borderBottom: cellBorder }}>
+                        <tr 
+                          key={item.id} 
+                          onClick={() => {
+                            setSelectedA11yItem(item);
+                            setIsDetailModalOpen(true);
+                          }}
+                          className="cursor-pointer transition-colors hover:bg-[#f2f4f6]/60"
+                          style={{ backgroundColor: rowBg, borderBottom: cellBorder }}
+                        >
                           {/* 1. no */}
                           <td className="py-2 px-3 text-center text-xs text-[#374151]" style={{ borderRight: cellBorder }}>
                             {item.sort_order || idx + 1}
@@ -894,12 +943,12 @@ export default function ProjectA11yPage() {
                           <td className="py-2 px-3 text-xs text-[#374151] relative group" style={{ borderRight: cellBorder, wordBreak: 'break-all' }}>
                             <div className="truncate max-w-[170px]">
                               <span className={`${item.checked ? 'line-through text-[#8b95a1]' : ''}`}>
-                                {item.text}
+                                {formatA11yText(item.text)}
                               </span>
                             </div>
                             {item.text && (
                               <div className="absolute left-4 bottom-full mb-1 hidden group-hover:block z-30 bg-[#191f28] text-white text-[11px] rounded-lg px-2.5 py-1.5 max-w-sm shadow-lg pointer-events-none leading-relaxed border border-[#333d4b] whitespace-normal word-break-all">
-                                {item.text}
+                                {formatA11yText(item.text)}
                               </div>
                             )}
                           </td>
@@ -921,7 +970,23 @@ export default function ProjectA11yPage() {
                             {item.assignee || '—'}
                           </td>
 
-                          {/* 6. 배포상태 */}
+                          {/* 5-2. 조치일 */}
+                          <td className="py-2 px-3 text-center text-xs text-[#374151]" style={{ borderRight: cellBorder }}>
+                            {item.due_date ? (() => {
+                              try {
+                                const d = new Date(item.due_date);
+                                if (isNaN(d.getTime())) return item.due_date;
+                                const yy = String(d.getFullYear()).slice(2);
+                                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                const dd = String(d.getDate()).padStart(2, '0');
+                                return `${yy}.${mm}.${dd}`;
+                              } catch {
+                                return item.due_date;
+                              }
+                            })() : '—'}
+                          </td>
+
+                          {/* 6. 상태 */}
                           <td className="py-2 px-3 text-center text-xs" style={{ borderRight: cellBorder }}>
                             {item.tag ? (
                               <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded font-semibold ${
@@ -950,28 +1015,19 @@ export default function ProjectA11yPage() {
                           </td>
 
                           {/* 8. 이미지 */}
-                          <td className="py-2 px-3 text-center" style={{ borderRight: cellBorder }}>
+                          <td className="py-2 px-3 text-center">
                             {item.image_url ? (
                               <button
-                                onClick={() => handleViewImage(item.image_url!)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewImage(item.image_url!);
+                                }}
                                 className="px-2 py-1 text-[10px] bg-[#eff6ff] text-[#3182f6] hover:bg-[#3182f6] hover:text-white rounded border border-[#3182f6]/20 transition-all font-semibold cursor-pointer"
                               >
-                                증빙 ↗
+                                  증빙 ↗
                               </button>
                             ) : (
                               <span className="text-xs text-[#8b95a1]">—</span>
-                            )}
-                          </td>
-
-                          {/* 9. 비고 */}
-                          <td className="py-2 px-3 text-xs text-[#4e5968] relative group">
-                            <div className="truncate max-w-[170px]">
-                              {comment || '—'}
-                            </div>
-                            {comment && (
-                              <div className="absolute right-4 bottom-full mb-1 hidden group-hover:block z-30 bg-[#191f28] text-white text-[11px] rounded-lg px-2.5 py-1.5 max-w-sm shadow-lg pointer-events-none leading-relaxed border border-[#333d4b] whitespace-normal word-break-all">
-                                {comment}
-                              </div>
                             )}
                           </td>
                         </tr>
@@ -990,6 +1046,226 @@ export default function ProjectA11yPage() {
         imageUrl={viewerImageUrl}
         onClose={() => setIsViewerOpen(false)}
       />
+
+      <A11yDetailModal
+        isOpen={isDetailModalOpen}
+        item={selectedA11yItem}
+        onClose={() => {
+          setSelectedA11yItem(null);
+          setIsDetailModalOpen(false);
+        }}
+      />
     </section>
   );
 }
+
+// ─── 접근성 상세 구글시트 전체 열 정보 팝업 모달 ───────────────────────────────
+
+interface A11yDetailModalProps {
+  isOpen: boolean;
+  item: ChecklistItem | null;
+  onClose: () => void;
+}
+
+function A11yDetailModal({ isOpen, item, onClose }: A11yDetailModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!isOpen || !item || !mounted) return null;
+
+  // memo 안에 패킹된 raw_data 추출
+  let rawData: Record<string, string> = {};
+  let errorMsg = '';
+  let checkStatus = '';
+  let comment = '';
+  let pageName = '';
+
+  if (item.memo) {
+    try {
+      const parsed = JSON.parse(item.memo);
+      errorMsg = parsed.error_msg || '';
+      checkStatus = parsed.check_status || '';
+      comment = parsed.comment || '';
+      pageName = parsed.page_name || '';
+      rawData = parsed.raw_data || {};
+    } catch {
+      errorMsg = item.memo;
+    }
+  }
+
+  // 만약 raw_data가 비어있다면 UI에 기본 필드라도 채워서 보여주기 위해 대체 생성
+  if (Object.keys(rawData).length === 0) {
+    rawData = {
+      '메뉴': item.group_name || '',
+      '지침명': formatA11yText(item.text) || '',
+      '오류사항': errorMsg || '',
+      '담당자': item.assignee || '',
+      '조치일': item.due_date || '',
+      '상태': item.tag || '',
+      '점검상태': checkStatus || '',
+      '화면명': pageName || ''
+    };
+  }
+
+  // Depth 1, 2, 3 키 식별 및 통합 처리
+  const depth1Keys = ['DEPTH 1', 'DEPTH1', '대분류', '메뉴 1', '메뉴1', 'DEPTH_01', 'DEPTH 01'];
+  const depth2Keys = ['DEPTH 2', 'DEPTH2', '중분류', '메뉴 2', '메뉴2', 'DEPTH_02', 'DEPTH 02'];
+  const depth3Keys = ['DEPTH 3', 'DEPTH3', '소분류', '메뉴 3', '메뉴3', 'DEPTH_03', 'DEPTH 03'];
+
+  let d1Val = '';
+  let d2Val = '';
+  let d3Val = '';
+  let d1Key = '';
+  let d2Key = '';
+  let d3Key = '';
+
+  Object.entries(rawData).forEach(([key, val]) => {
+    const upperKey = key.trim().toUpperCase();
+    const cleanKey = upperKey.replace(/\s+/g, '');
+    
+    if (depth1Keys.includes(upperKey) || depth1Keys.includes(cleanKey)) {
+      d1Val = val;
+      d1Key = key;
+    } else if (depth2Keys.includes(upperKey) || depth2Keys.includes(cleanKey)) {
+      d2Val = val;
+      d2Key = key;
+    } else if (depth3Keys.includes(upperKey) || depth3Keys.includes(cleanKey)) {
+      d3Val = val;
+      d3Key = key;
+    }
+  });
+
+  if (d1Key || d2Key || d3Key) {
+    const displayData = { ...rawData };
+    if (d1Key) delete displayData[d1Key];
+    if (d2Key) delete displayData[d2Key];
+    if (d3Key) delete displayData[d3Key];
+
+    const menuPathParts = [];
+    if (d1Val) menuPathParts.push(d1Val);
+    if (d2Val) menuPathParts.push(d2Val);
+    if (d3Val) menuPathParts.push(d3Val);
+    
+    rawData = {
+      '메뉴 경로': menuPathParts.join(' > ') || '—',
+      ...displayData
+    };
+  }
+
+  const modalContent = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Dim Background */}
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
+        onClick={onClose}
+      />
+      
+      {/* Modal Container */}
+      <div className="bg-white rounded-2xl shadow-2xl z-10 w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-fade-in border border-[#e5e8eb]">
+        {/* Header */}
+        <div className="p-5 border-b border-[#e5e8eb] flex items-center justify-between bg-[#1a3a5c] text-white">
+          <div>
+            <h3 className="text-sm font-bold tracking-tight">상세 점검 정보</h3>
+            <p className="text-[10px] text-white/70 mt-0.5">{item.group_name} &gt; {formatA11yText(item.text)}</p>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-white transition-colors cursor-pointer text-sm font-bold"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Content Body */}
+        <div className="p-6 overflow-y-auto flex-1 space-y-4 font-sans">
+          {/* 증빙 이미지 미리보기 */}
+          {item.image_url && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-bold text-[#8b95a1]">증빙 스크린샷</h4>
+              <div className="border border-[#e5e8eb] rounded-xl overflow-hidden bg-[#f9fafb] p-2 flex justify-center max-h-[220px]">
+                <img 
+                  src={item.image_url} 
+                  alt="A11y 증빙" 
+                  className="max-h-[200px] w-auto object-contain rounded-lg shadow-sm"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 전체 구글 시트 원본 정보 그리드 */}
+          <div className="space-y-2">
+            <h4 className="text-[11px] font-bold text-[#8b95a1]">스프레드시트 원본 정보 (모든 열)</h4>
+            <div className="border border-[#e5e8eb] rounded-xl overflow-hidden bg-white">
+              <div className="divide-y divide-[#e5e8eb] max-h-[350px] overflow-y-auto text-xs">
+                {Object.entries(rawData).map(([key, val]) => {
+                  if (!key || key.trim().length === 0) return null;
+                  
+                  // U, V, W, X열 (비고 및 그 이후 데이터) 및 이미지 열 노출 제외
+                  const trimmedKey = key.trim().toUpperCase();
+                  if (
+                    trimmedKey === '비고' || 
+                    trimmedKey === 'U' || 
+                    trimmedKey === 'V' || 
+                    trimmedKey === 'W' || 
+                    trimmedKey === 'X' ||
+                    trimmedKey === '이미지' ||
+                    trimmedKey === 'IMAGE' ||
+                    trimmedKey === 'S'
+                  ) {
+                    return null;
+                  }
+
+                  return (
+                    <div key={key} className="flex min-h-[36px] items-center hover:bg-[#f9fafb] transition-colors">
+                      <div className="w-[140px] px-4 py-2 font-bold text-[#4e5968] bg-[#f9fafb] border-r border-[#e5e8eb] shrink-0 self-stretch flex items-center">
+                        {key}
+                      </div>
+                      <div className="flex-1 px-4 py-2 text-[#191f28] whitespace-pre-wrap break-all leading-relaxed">
+                        {val || '—'}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 bg-[#f9fafb] border-t border-[#e5e8eb] flex justify-end">
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 bg-[#3182f6] hover:bg-[#1b64da] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+          >
+            확인
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(modalContent, document.body);
+}
+
+const formatA11yText = (text: string) => {
+  if (!text) return '';
+  if (text.startsWith('웹 접근성 검사항목')) return text;
+  
+  // "숫자-텍스트" 또는 "숫자 - 텍스트" 패턴 매칭
+  const match = text.match(/^(\d+)\s*-\s*(.+)$/);
+  if (match) {
+    return `웹 접근성 검사항목 ${match[1]} - ${match[2]}`;
+  }
+  
+  // "숫자"만 있는 경우
+  const matchNum = text.match(/^(\d+)$/);
+  if (matchNum) {
+    return `웹 접근성 검사항목 ${matchNum[1]}`;
+  }
+  
+  return text;
+};

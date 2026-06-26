@@ -71,10 +71,10 @@ function createWeeklySlide() {
     _updateDetailSlides(pres, tasks, listPageCount);
 
     _moveToFolder(DriveApp.getFileById(pres.getId()));
-    
+
     // 백엔드 API를 호출해 슬라이드 생성 이력 등록 및 누적
     _a11ySyncSlideHistory(pres);
-    
+
     _showCompletionDialog(ui, pres, tasks.length);
   } catch (e) {
     _handleFatalError(ui, e);
@@ -366,13 +366,22 @@ function _replaceSlideImage(slide, url) {
   target.remove();
 
   try {
-    var response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    var response = UrlFetchApp.fetch(url, { 
+      muteHttpExceptions: true,
+      headers: {
+        "Authorization": "Bearer " + ScriptApp.getOAuthToken()
+      }
+    });
     var code = response.getResponseCode();
 
     if (code !== 200) {
+      var extraMsg = "";
+      if (code === 403 && url.indexOf("googleusercontent.com") !== -1) {
+        extraMsg = " (※ 구글 시트 셀 자체 삽입 이미지는 보안 정책상 외부 다운로드가 불가능합니다. 구글 드라이브 등에 올린 후 파일 공유 URL을 입력해 주세요.)";
+      }
       _logWarning(
         "replaceSlideImage",
-        "이미지 로드 실패 (HTTP " + code + "): " + url,
+        "이미지 로드 실패 (HTTP " + code + "): " + url + extraMsg,
       );
       return;
     }
@@ -446,9 +455,10 @@ var A11Y_COL = {
   H: 7, // H열: 지침명 (지침명)
   I: 8, // I열: 유형 (오류사항)
   M: 12, // M열: 담당자 (담당자)
+  N: 13, // N열: 조치일 (조치일)
   O: 14, // O열: 상태값 (검수완료, 수정완료, 조치완료, 수정중, 조치필요 등)
   S: 18, // S열: 이미지 (이미지)
-  U: 20, // U열: 비고 2 (비고)
+  T: 19, // T열: 점검상태 (현행유지, 적합, 부적합 등)
 };
 
 /**
@@ -469,7 +479,7 @@ function syncA11yToSupabase() {
     var sampleRows = [];
     if (lastRow >= A11Y_CONFIG.DATA_START_ROW) {
       var numRows = Math.min(5, lastRow - A11Y_CONFIG.DATA_START_ROW + 1);
-      var maxCols = Math.min(25, sheet.getLastColumn());
+      var maxCols = Math.min(20, sheet.getLastColumn());
       var rangeVal = sheet
         .getRange(A11Y_CONFIG.DATA_START_ROW, 1, numRows, maxCols)
         .getValues();
@@ -565,8 +575,18 @@ function _a11yReadRows(sheet) {
   var lastRow = sheet.getLastRow();
   if (lastRow < A11Y_CONFIG.DATA_START_ROW) return [];
 
+  // 헤더 행 읽기 (1행 전체)
+  var maxCols = Math.min(20, sheet.getLastColumn());
+  var headerRange = sheet.getRange(1, 1, 1, maxCols);
+  var headerValues = headerRange.getValues()[0];
+  var headers = [];
+  for (var h = 0; h < maxCols; h++) {
+    var hName = String(headerValues[h]).trim();
+    // 빈 헤더인 경우 알파벳 열 문자로 대체
+    headers.push(hName || String.fromCharCode(65 + h));
+  }
+
   var numRows = lastRow - A11Y_CONFIG.DATA_START_ROW + 1;
-  var maxCols = Math.min(25, sheet.getLastColumn());
   var range = sheet.getRange(A11Y_CONFIG.DATA_START_ROW, 1, numRows, maxCols);
   var values = range.getValues();
 
@@ -581,6 +601,21 @@ function _a11yReadRows(sheet) {
     var iVal = _a11yParseText(row[A11Y_COL.I]);
     if (!gVal && !hVal && !iVal) continue;
 
+    // A~Y열 전체 데이터 객체 매핑
+    var rawData = {};
+    for (var colIdx = 0; colIdx < maxCols; colIdx++) {
+      var hName = headers[colIdx];
+      var cellVal = row[colIdx];
+      // 날짜인 경우 문자열 포맷팅 처리
+      if (cellVal instanceof Date) {
+        var y = cellVal.getFullYear();
+        var m = String(cellVal.getMonth() + 1).padStart(2, "0");
+        var d = String(cellVal.getDate()).padStart(2, "0");
+        cellVal = y + "-" + m + "-" + d;
+      }
+      rawData[hName] = cellVal !== null && cellVal !== undefined ? String(cellVal).trim() : "";
+    }
+
     // 1. 메뉴: A, B, C열의 depth 1~3 값을 병합하여 'a > b > c' 형식으로 작성 (빈 필드는 생략)
     var aVal = _a11yParseText(row[A11Y_COL.A]);
     var bVal = _a11yParseText(row[A11Y_COL.B]);
@@ -592,16 +627,21 @@ function _a11yReadRows(sheet) {
     var groupName = menuParts.join(" > ");
     if (!groupName) groupName = "기타";
 
-    // 2. 지침명: G, H열의 내용을 g-h 형식으로 작성
+    // 2. 지침명: 웹 접근성 검사항목 G - H 형식으로 작성
     var text = "";
     if (gVal && hVal) {
-      text = gVal + "-" + hVal;
+      text = "웹 접근성 검사항목 " + gVal + " - " + hVal;
+    } else if (gVal) {
+      text = "웹 접근성 검사항목 " + gVal;
     } else {
-      text = gVal || hVal || "내용 없음";
+      text = hVal || "내용 없음";
     }
 
     // 3. 담당자: M열의 내용 작성
     var assignee = _a11yParseText(row[A11Y_COL.M]);
+
+    // 3-2. 조치일: N열의 내용 작성
+    var dueDate = _a11yParseDate(row[A11Y_COL.N]);
 
     // 4. 배포상태 및 진행상태: O열의 상태값 작성 -> tag (검수완료, 수정완료, 조치완료, 수정중, 조치필요 등)
     var tag = _a11yParseText(row[A11Y_COL.O]);
@@ -613,16 +653,20 @@ function _a11yReadRows(sheet) {
     // 6. 점검상태: O열의 상태값을 기반으로 검수완료 여부 파악
     var checked = _a11yParseChecked(tag); // 검수완료 등 여부 판단
 
-    // 7. 비고: U열의 내용 작성
-    var uVal = _a11yParseText(row[A11Y_COL.U]);
+    // 7. 점검상태 구체적 텍스트: T열의 점검상태 작성 (현행유지 등)
+    var tVal = _a11yParseText(row[A11Y_COL.T]) || "";
 
-    // 오류사항(iVal), 점검상태(tag), 비고(uVal) 및 페이지명(E열)을 JSON 문자열 형태로 패킹하여 memo에 저장
+    // 8. 비고: 수집 제외 처리
+    var uVal = null;
+
+    // 오류사항(iVal), 점검상태(tVal), 비고(uVal) 및 페이지명(E열)을 JSON 문자열 형태로 패킹하여 memo에 저장
     var pageName = _a11yParseText(row[4]) || "";
     var memoObj = {
       error_msg: iVal || "",
-      check_status: tag || "",
+      check_status: tVal || "",
       comment: uVal || "",
       page_name: pageName,
+      raw_data: rawData, // 모든 열의 원본 데이터 수집
     };
     var memo = JSON.stringify(memoObj);
 
@@ -631,7 +675,7 @@ function _a11yReadRows(sheet) {
       text: text,
       checked: checked,
       assignee: assignee,
-      due_date: null, // 이번 개편에서는 조치일이 컬럼 목록에서 제외되므로 null 처리
+      due_date: dueDate,
       memo: memo,
       tag: tag,
       image_url: imageUrl,
@@ -656,7 +700,7 @@ function _a11yCallSyncApi(rows) {
     contentType: "application/json",
     headers: {
       Authorization: "Bearer " + A11Y_CONFIG.SYNC_SECRET,
-      "ngrok-skip-browser-warning": "true"
+      "ngrok-skip-browser-warning": "true",
     },
     payload: payload,
     muteHttpExceptions: true,
@@ -731,15 +775,31 @@ function _a11yParseDate(val) {
   var str = String(val).trim();
   if (!str || str === "—") return null;
 
-  var korMatch = str.match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/);
-  if (korMatch) {
-    var y2 = korMatch[1];
-    var m2 = korMatch[2].padStart(2, "0");
-    var d2 = korMatch[3].padStart(2, "0");
-    return y2 + "-" + m2 + "-" + d2;
+  // 1. 다양한 날짜 구분자(., -, /) 및 2자리/4자리 연도 유연한 매칭
+  var match = str.match(/^(\d{2,4})[\.\-\/]\s*(\d{1,2})[\.\-\/]\s*(\d{1,2})\.?$/);
+  if (match) {
+    var yVar = match[1];
+    var mVar = match[2].padStart(2, "0");
+    var dVar = match[3].padStart(2, "0");
+    if (yVar.length === 2) {
+      yVar = "20" + yVar; // 2자리 연도(예: 26)는 2000년대로 보정
+    }
+    return yVar + "-" + mVar + "-" + dVar;
   }
 
+  // 2. 표준 YYYY-MM-DD 포맷
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+  // 3. 자바스크립트 내장 Date를 이용한 복구 시도
+  try {
+    var testDate = new Date(str);
+    if (!isNaN(testDate.getTime())) {
+      var y3 = testDate.getFullYear();
+      var m3 = String(testDate.getMonth() + 1).padStart(2, "0");
+      var d3 = String(testDate.getDate()).padStart(2, "0");
+      return y3 + "-" + m3 + "-" + d3;
+    }
+  } catch (e) {}
 
   return null;
 }
@@ -825,39 +885,46 @@ function onOpen() {
 function _a11ySyncSlideHistory(pres) {
   try {
     if (!A11Y_CONFIG.API_ENDPOINT) return;
-    
+
     // A11Y_CONFIG.API_ENDPOINT 예: "https://.../api/a11y-sync"
     // 이를 바탕으로 슬라이드 히스토리 동기화 주소인 "/api/deploy-slide-sync"로 치환
-    var syncEndpoint = A11Y_CONFIG.API_ENDPOINT.replace("/api/a11y-sync", "/api/deploy-slide-sync");
-    
+    var syncEndpoint = A11Y_CONFIG.API_ENDPOINT.replace(
+      "/api/a11y-sync",
+      "/api/deploy-slide-sync",
+    );
+
     var activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     var sheetUrl = activeSpreadsheet.getUrl();
-    
+
     var payload = JSON.stringify({
       sheet_url: sheetUrl,
       slide_title: pres.getName(),
-      slide_url: pres.getUrl()
+      slide_url: pres.getUrl(),
     });
-    
+
     var options = {
       method: "post",
       contentType: "application/json",
       headers: {
         Authorization: "Bearer " + A11Y_CONFIG.SYNC_SECRET,
-        "ngrok-skip-browser-warning": "true"
+        "ngrok-skip-browser-warning": "true",
       },
       payload: payload,
-      muteHttpExceptions: true
+      muteHttpExceptions: true,
     };
-    
-    Logger.log("[Slide Sync] 슬라이드 이력 등록 요청 중... URL: " + syncEndpoint);
+
+    Logger.log(
+      "[Slide Sync] 슬라이드 이력 등록 요청 중... URL: " + syncEndpoint,
+    );
     var response = UrlFetchApp.fetch(syncEndpoint, options);
     var code = response.getResponseCode();
     var contentText = response.getContentText();
-    
+
     Logger.log("[Slide Sync] 응답 코드: " + code + ", 내용: " + contentText);
   } catch (e) {
     // 슬라이드 생성 전체 프로세스가 취소되지 않도록 try-catch로 예외 격리
-    Logger.log("[Slide Sync Warning] 슬라이드 생성 이력 전송 실패: " + e.message);
+    Logger.log(
+      "[Slide Sync Warning] 슬라이드 생성 이력 전송 실패: " + e.message,
+    );
   }
 }

@@ -213,9 +213,26 @@ export default function ProjectReportsPage() {
   }, [wbsStats]);
 
   // ── Accessibility Stats ──
-  const getA11yStatus = (item: ChecklistItem): 'pass' | 'fail' | 'na' | 'unchecked' => {
+  const getA11yStatus = (item: ChecklistItem): 'pass' | 'fail' | 'na' | 'unchecked' | 'skip' => {
+    let checkStatus = '';
+    if (item.memo) {
+      try {
+        const parsed = JSON.parse(item.memo);
+        checkStatus = parsed.check_status || '';
+      } catch {}
+    }
+    if (checkStatus.includes('현행유지') || checkStatus.includes('현행 유지')) {
+      return 'skip';
+    }
+
     const tagStr = (item.tag || '').trim();
-    if (tagStr.includes('검수완료') || tagStr.includes('검수 완료') || item.checked) {
+    if (
+      tagStr.includes('검수완료') ||
+      tagStr.includes('검수 완료') ||
+      tagStr.includes('조치완료') ||
+      tagStr.includes('조치 완료') ||
+      item.checked
+    ) {
       return 'pass';
     } else if (tagStr.includes('조치필요') || tagStr.includes('조치 필요') || tagStr.includes('오류') || tagStr.includes('실패')) {
       return 'fail';
@@ -254,8 +271,10 @@ export default function ProjectReportsPage() {
       }
 
       const status = getA11yStatus(item);
-      stats[platform].total++;
-      stats[platform][status]++;
+      if (status !== 'skip') {
+        stats[platform].total++;
+        stats[platform][status]++;
+      }
     });
 
     if (stats.web.total === 0) stats.web = demoA11y.web;

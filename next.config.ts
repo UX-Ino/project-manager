@@ -26,6 +26,20 @@ const nextConfig: NextConfig = {
     "192.168.20.42:3000",
     ...getLocalIPs()
   ],
+  async redirects() {
+    return [
+      {
+        source: "/projects/:slug/checklist",
+        destination: "/projects/:slug/guide",
+        permanent: true, // Uses 308 permanent redirect
+      },
+      {
+        source: "/projects/:slug/board",
+        destination: "/projects/:slug/guide",
+        permanent: true, // Uses 308 permanent redirect
+      },
+    ];
+  },
 };
 
 export default nextConfig;
