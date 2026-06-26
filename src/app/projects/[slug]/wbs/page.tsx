@@ -1353,7 +1353,7 @@ export default function ProjectWbsPage() {
                                       {/* 계획 일정 바 (Plan Bar) */}
                                       {posPlan && (
                                         <div
-                                          className="absolute h-[18px] top-[10px] rounded-[4px] flex items-center group shadow-sm border border-[#cbd5e1] bg-[#f1f5f9] overflow-visible"
+                                          className="absolute h-[18px] top-[10px] rounded-[4px] flex items-center shadow-sm border border-[#cbd5e1] bg-[#f1f5f9] overflow-visible"
                                           style={{
                                             left: `${posPlan.left}%`,
                                             width: `${posPlan.width}%`,
@@ -1370,9 +1370,6 @@ export default function ProjectWbsPage() {
                                               }}
                                             />
                                           )}
-                                          
-                                          {/* 통합 툴팁 */}
-                                          {combinedTooltipText}
                                         </div>
                                       )}
  
@@ -1384,7 +1381,7 @@ export default function ProjectWbsPage() {
                                         
                                         return (
                                           <div
-                                            className={`absolute ${barHeight} ${topPos} rounded-[4px] flex items-center group shadow-sm overflow-visible`}
+                                            className={`absolute ${barHeight} ${topPos} rounded-[4px] flex items-center shadow-sm overflow-visible`}
                                             style={{
                                               left: `${posActual.left}%`,
                                               width: `${posActual.width}%`,
@@ -1406,12 +1403,12 @@ export default function ProjectWbsPage() {
                                                 />
                                               )}
                                             </div>
-                                            
-                                            {/* 통합 툴팁 */}
-                                            {combinedTooltipText}
                                           </div>
                                         );
                                       })()}
+
+                                      {/* 통합 툴팁 */}
+                                      {(posPlan || posActual) && combinedTooltipText}
                                     </>
                                   );
                                 })()}
