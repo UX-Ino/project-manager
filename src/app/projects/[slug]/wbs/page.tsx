@@ -42,6 +42,23 @@ export default function ProjectWbsPage() {
   const [wbsViewMode, setWbsViewMode] = useState<'table' | 'sheet' | 'gantt'>('table');
   const [editingSheetUrl, setEditingSheetUrl] = useState(false);
   const [sheetUrlInput, setSheetUrlInput] = useState('');
+
+  // 마우스 트래킹 툴팁 상태
+  const [hoveredRow, setHoveredRow] = useState<WBSRow | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const handleTimelineMouseEnter = (row: WBSRow, e: React.MouseEvent) => {
+    setHoveredRow(row);
+    setTooltipPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleTimelineMouseMove = (e: React.MouseEvent) => {
+    setTooltipPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleTimelineMouseLeave = () => {
+    setHoveredRow(null);
+  };
   
   // WBS 아코디언(접기/펴기) 상태
   const [collapsedRowIds, setCollapsedRowIds] = useState<Set<string>>(new Set());
@@ -1164,7 +1181,12 @@ export default function ProjectWbsPage() {
                                   {taskText}
                                 </span>
                               </div>
-                              <div className="flex-1 relative h-full flex items-center group">
+                              <div 
+                                className="flex-1 relative h-full flex items-center"
+                                onMouseEnter={(e) => handleTimelineMouseEnter(row, e)}
+                                onMouseMove={handleTimelineMouseMove}
+                                onMouseLeave={handleTimelineMouseLeave}
+                              >
                                 {posPlan && (
                                   <div
                                     className="absolute h-[12px] rounded-md transition-all duration-500"
@@ -1188,44 +1210,6 @@ export default function ProjectWbsPage() {
                                       zIndex: 20
                                     }}
                                   />
-                                )}
-                                
-                                {/* L1 통합 툴팁 */}
-                                {(posPlan || posActual) && (
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block bg-[#191f28] text-white text-[11px] rounded-lg p-3 whitespace-nowrap z-50 shadow-xl border border-[#333d4b] leading-normal font-sans pointer-events-none min-w-[200px]">
-                                    <p className="font-bold text-white mb-2 pb-1.5 border-b border-[#333d4b] flex items-center gap-1.5">
-                                      <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: currentPhaseColor }} />
-                                      <span>{taskText} (전체 일정)</span>
-                                    </p>
-                                    <div className="space-y-2">
-                                      <div className="flex flex-col gap-0.5">
-                                        <div className="flex items-center gap-1.5 text-[#94a3b8] font-bold text-[10px]">
-                                          <span className="w-1.5 h-1.5 rounded-sm" style={{ backgroundColor: `${currentPhaseColor}33` }} />
-                                          <span>계획 일정</span>
-                                        </div>
-                                        {comp.plan_start ? (
-                                          <span className="text-white font-medium pl-3">
-                                            {comp.plan_start} ~ {comp.plan_end} ({getDiffDays(comp.plan_start, comp.plan_end)}일)
-                                          </span>
-                                        ) : (
-                                          <span className="text-[#8b95a1] pl-3 italic">계획 없음</span>
-                                        )}
-                                      </div>
-                                      <div className="flex flex-col gap-0.5">
-                                        <div className="flex items-center gap-1.5 font-bold text-[10px]" style={{ color: currentPhaseColor }}>
-                                          <span className="w-1.5 h-1.5 rounded-sm" style={{ backgroundColor: currentPhaseColor }} />
-                                          <span>실제 일정</span>
-                                        </div>
-                                        {comp.actual_start ? (
-                                          <span className="text-white font-medium pl-3">
-                                            {comp.actual_start} ~ {comp.actual_end} ({getDiffDays(comp.actual_start, comp.actual_end)}일)
-                                          </span>
-                                        ) : (
-                                          <span className="text-[#8b95a1] pl-3 italic">실제 없음</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
                                 )}
 
                                 {phaseIndex === 0 && todayPercent !== null && (
@@ -1282,7 +1266,12 @@ export default function ProjectWbsPage() {
                                   {row.assignee || '—'}
                                 </span>
                               </div>
-                              <div className="flex-1 relative h-full flex items-center">
+                              <div 
+                                className="flex-1 relative h-full flex items-center"
+                                onMouseEnter={(e) => handleTimelineMouseEnter(row, e)}
+                                onMouseMove={handleTimelineMouseMove}
+                                onMouseLeave={handleTimelineMouseLeave}
+                              >
                                 {isMilestoneRow && pos && (
                                   <div
                                     className="absolute top-1/2 -translate-y-1/2 flex items-center gap-2 group/ms"
@@ -1306,48 +1295,7 @@ export default function ProjectWbsPage() {
                                 
                                 {!isMilestoneRow && (() => {
                                   const actualProgress = row.actual_progress ?? 0;
-                                  const planDays = row.plan_start && row.plan_end ? getDiffDays(row.plan_start, row.plan_end) : 0;
-                                  const actualDays = row.actual_start && row.actual_end ? getDiffDays(row.actual_start, row.actual_end) : 0;
                                   
-                                  const combinedTooltipText = (
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 hidden group-hover:block bg-[#191f28] text-white text-[11.5px] rounded-lg p-3.5 whitespace-nowrap z-50 shadow-2xl border border-[#333d4b] leading-normal font-sans pointer-events-none min-w-[240px]">
-                                      <p className="font-bold text-white mb-2 pb-1.5 border-b border-[#333d4b]/70 flex items-center justify-between gap-3">
-                                        <span className="text-[12px] truncate max-w-[160px]" title={taskText}>{taskText}</span>
-                                        {row.assignee && <span className="text-[10px] text-[#8b95a1] font-normal shrink-0">담당: {row.assignee}</span>}
-                                      </p>
-                                      <div className="space-y-2">
-                                        {/* 계획 정보 */}
-                                        <div className="flex flex-col gap-0.5">
-                                          <div className="flex items-center gap-1.5 text-[#94a3b8] font-bold text-[10px]">
-                                            <span className="w-1.5 h-1.5 rounded-sm bg-[#cbd5e1]" />
-                                            <span>계획 일정 ({row.plan_progress}%)</span>
-                                          </div>
-                                          {row.plan_start ? (
-                                            <span className="text-white font-medium pl-3">
-                                              {row.plan_start} ~ {row.plan_end} ({planDays}일간)
-                                            </span>
-                                          ) : (
-                                            <span className="text-[#8b95a1] pl-3 italic">계획 일정 없음</span>
-                                          )}
-                                        </div>
-                                        {/* 실제 정보 */}
-                                        <div className="flex flex-col gap-0.5">
-                                          <div className="flex items-center gap-1.5 font-bold text-[10px]" style={{ color: sc.bar }}>
-                                            <span className="w-1.5 h-1.5 rounded-sm" style={{ backgroundColor: sc.bar }} />
-                                            <span>실제 일정 ({row.status}: {actualProgress}%)</span>
-                                          </div>
-                                          {row.actual_start ? (
-                                            <span className="text-white font-medium pl-3">
-                                              {row.actual_start} ~ {row.actual_end} ({actualDays}일간)
-                                            </span>
-                                          ) : (
-                                            <span className="text-[#8b95a1] pl-3 italic">실제 일정 없음</span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-
                                   return (
                                     <>
                                       {/* 계획 일정 바 (Plan Bar) */}
@@ -1406,9 +1354,6 @@ export default function ProjectWbsPage() {
                                           </div>
                                         );
                                       })()}
-
-                                      {/* 통합 툴팁 */}
-                                      {(posPlan || posActual) && combinedTooltipText}
                                     </>
                                   );
                                 })()}
@@ -1632,6 +1577,86 @@ export default function ProjectWbsPage() {
             <div className="flex items-center justify-between px-5 py-2.5 border-t border-[#eef1f6] bg-[#fafbfd] text-[11px] text-[#8a93a6] shrink-0">
               <span>표시 <b className="text-[#3a4358]">{wbsRows.length}</b>개 업무</span>
               <span>출처: 프로젝트 WBS 상세 테이블</span>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 마우스 트래킹 공용 툴팁 (짤림 방지 방향 전환 적용) */}
+      {hoveredRow && (() => {
+        const isL1 = hoveredRow.level === 1;
+        const taskText = hoveredRow.task_l1 || hoveredRow.task_l2 || hoveredRow.task_l3 || hoveredRow.task_l4 || (hoveredRow.level >= 5 ? hoveredRow.description : null) || '';
+        
+        let plan_start = hoveredRow.plan_start;
+        let plan_end = hoveredRow.plan_end;
+        let actual_start = hoveredRow.actual_start;
+        let actual_end = hoveredRow.actual_end;
+        let planProgress = hoveredRow.plan_progress;
+        let actualProgress = hoveredRow.actual_progress;
+
+        if (isL1) {
+          const comp = getComputedDatesForL1(hoveredRow, wbsRows);
+          plan_start = comp.plan_start;
+          plan_end = comp.plan_end;
+          actual_start = comp.actual_start;
+          actual_end = comp.actual_end;
+        }
+
+        const planDays = plan_start && plan_end ? getDiffDays(plan_start, plan_end) : 0;
+        const actualDays = actual_start && actual_end ? getDiffDays(actual_start, actual_end) : 0;
+
+        const statusColors: Record<string, string> = {
+          '완료': '#22a06b',
+          '진행중': '#3b82f6',
+          '미진행': '#cbd5e1'
+        };
+        const actualColor = statusColors[hoveredRow.status] || '#cbd5e1';
+
+        const isNearRight = typeof window !== 'undefined' && tooltipPos.x + 280 > window.innerWidth;
+        const isNearBottom = typeof window !== 'undefined' && tooltipPos.y + 180 > window.innerHeight;
+
+        const offsetX = isNearRight ? -280 : 15;
+        const offsetY = isNearBottom ? -180 : 15;
+
+        return (
+          <div 
+            className="fixed z-[9999] bg-[#191f28] text-white text-[11.5px] rounded-lg p-3.5 shadow-2xl border border-[#333d4b] leading-normal font-sans pointer-events-none min-w-[250px] transition-all duration-75 ease-out"
+            style={{
+              left: `${tooltipPos.x + offsetX}px`,
+              top: `${tooltipPos.y + offsetY}px`,
+            }}
+          >
+            <p className="font-bold text-white mb-2 pb-1.5 border-b border-[#333d4b]/70 flex items-center justify-between gap-3">
+              <span className="text-[12px] truncate max-w-[170px]" title={taskText}>{taskText}</span>
+              {hoveredRow.assignee && <span className="text-[10px] text-[#8b95a1] font-normal shrink-0">담당: {hoveredRow.assignee}</span>}
+            </p>
+            <div className="space-y-2">
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5 text-[#94a3b8] font-bold text-[10px]">
+                  <span className="w-1.5 h-1.5 rounded-sm bg-[#cbd5e1]" />
+                  <span>계획 일정 {isL1 ? '' : `(${planProgress}%)`}</span>
+                </div>
+                {plan_start ? (
+                  <span className="text-white font-medium pl-3">
+                    {plan_start} ~ {plan_end} ({planDays}일간)
+                  </span>
+                ) : (
+                  <span className="text-[#8b95a1] pl-3 italic">계획 일정 없음</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5 font-bold text-[10px]" style={{ color: actualColor }}>
+                  <span className="w-1.5 h-1.5 rounded-sm" style={{ backgroundColor: actualColor }} />
+                  <span>실제 일정 {isL1 ? '' : `(${hoveredRow.status}: ${actualProgress}%)`}</span>
+                </div>
+                {actual_start ? (
+                  <span className="text-white font-medium pl-3">
+                    {actual_start} ~ {actual_end} ({actualDays}일간)
+                  </span>
+                ) : (
+                  <span className="text-[#8b95a1] pl-3 italic">실제 일정 없음</span>
+                )}
+              </div>
             </div>
           </div>
         );
