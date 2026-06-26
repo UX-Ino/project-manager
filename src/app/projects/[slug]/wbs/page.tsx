@@ -1301,7 +1301,7 @@ export default function ProjectWbsPage() {
                                       {/* 계획 일정 바 (Plan Bar) */}
                                       {posPlan && (
                                         <div
-                                          className="absolute h-[18px] top-[10px] rounded-[4px] flex items-center shadow-sm border border-[#cbd5e1] bg-[#f1f5f9] overflow-visible"
+                                          className="absolute h-[12px] top-[13px] rounded-md flex items-center shadow-sm border border-[#cbd5e1] bg-[#f1f5f9] overflow-visible"
                                           style={{
                                             left: `${posPlan.left}%`,
                                             width: `${posPlan.width}%`,
@@ -1323,13 +1323,9 @@ export default function ProjectWbsPage() {
  
                                       {/* 실제 일정 바 (Actual Bar) */}
                                       {posActual && (() => {
-                                        const hasPlan = !!posPlan;
-                                        const barHeight = hasPlan ? 'h-[10px]' : 'h-[16px]';
-                                        const topPos = hasPlan ? 'top-[14px]' : 'top-[11px]';
-                                        
                                         return (
                                           <div
-                                            className={`absolute ${barHeight} ${topPos} rounded-[4px] flex items-center shadow-sm overflow-visible`}
+                                            className="absolute h-[6px] top-[16px] rounded-[3px] flex items-center shadow-sm overflow-visible"
                                             style={{
                                               left: `${posActual.left}%`,
                                               width: `${posActual.width}%`,
