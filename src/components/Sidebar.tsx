@@ -140,12 +140,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               {/* Nested Sub-menus */}
               <div className="ml-5 pl-3 py-1 space-y-0.5" style={{ borderLeft: '1.5px solid #e8ecf3' }}>
                 {[
+                  { key: 'reports', label: '리포트' },
                   { key: 'guide', label: '포지션별 가이드' },
                   { key: 'wbs', label: 'WBS 일정표' },
                   { key: 'a11y', label: '접근성 점검리스트' },
                   { key: 'deploy-slides', label: '배포리스트' },
                   { key: 'weekly', label: '주간보고서 생성기' },
-                  { key: 'reports', label: '리포트' },
                   { key: 'documents', label: '산출물 보관함' },
                 ].map(({ key, label }) => {
                   const isTabActive = activeMenu === key;

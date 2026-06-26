@@ -114,7 +114,7 @@ export default function ProjectDeploySlidesPage() {
   const a11ySheetUrl = currentProject.a11y_sheet_url || '';
 
   return (
-    <section className="space-y-6 animate-fade-in max-w-4xl">
+    <section className="space-y-6 animate-fade-in w-full">
       <div>
         <h2 className="text-xl font-bold font-heading" style={{ color: '#191f28' }}>배포 슬라이드 자동 생성</h2>
         <p className="text-xs mt-0.5" style={{ color: '#8b95a1' }}>
@@ -124,7 +124,7 @@ export default function ProjectDeploySlidesPage() {
 
       <div className="space-y-6">
         {/* 상단 카드: 스프레드시트 연동 */}
-        <div className="max-w-2xl">
+        <div className="w-full">
           <div className="bg-white p-6 rounded-2xl border border-[#e5e8eb] shadow-sm flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             {hasA11ySheetUrl ? (
               <>
@@ -143,10 +143,11 @@ export default function ProjectDeploySlidesPage() {
                         아래 <strong>[구글 시트 열기]</strong>를 눌러 연동 시트로 이동합니다.
                       </li>
                       <li>
-                        시트 내 <strong>&quot;배포리스트&quot;</strong> 탭에 규격(A~I열)대로 배포 수정 내역을 입력합니다. (이미지 증빙은 <code>삽입 ➡ 셀에 이미지 삽입</code> 메뉴 필수)
+                        시트 내 <strong>&quot;배포리스트&quot;</strong> 탭에 으로 이동합니다.
+                        필터로 [웹 접근성 상세 결과] 탭의 내용을 자동으로 가지고 옵니다.
                       </li>
                       <li>
-                        스프레드시트 상단 메뉴바의 <strong>[🔄 WBS/접근성 동기화] ➡ [배포 슬라이드 생성]</strong>을 클릭하여 실행합니다.
+                        스프레드시트 상단 메뉴바의 <strong>[슬라이드 자동화]</strong>을 클릭하여 실행합니다.
                       </li>
                       <li>
                         Apps Script가 구글 드라이브에 슬라이드를 생성하며, 본 웹 앱의 하단 <strong>[생성 이력]</strong> 목록에 실시간 누적됩니다.
@@ -171,13 +172,13 @@ export default function ProjectDeploySlidesPage() {
                         <tbody className="divide-y divide-[#e5e8eb]/60">
                           <tr>
                             <td className="py-1.5 font-semibold text-[#3182f6]">A열</td>
-                            <td className="py-1.5 font-medium text-[#191f28]">선택</td>
-                            <td className="py-1.5 text-[#4e5968]">체크박스 (체크된 항목만 슬라이드에 반영)</td>
+                            <td className="py-1.5 font-medium text-[#191f28]">SheetNo</td>
+                            <td className="py-1.5 text-[#4e5968]">웹 접근성 상세 결과 탭 No</td>
                           </tr>
                           <tr>
                             <td className="py-1.5 font-semibold text-[#3182f6]">B열</td>
                             <td className="py-1.5 font-medium text-[#191f28]">No</td>
-                            <td className="py-1.5 text-[#4e5968]">슬라이드 번호 및 순서 (숫자)</td>
+                            <td className="py-1.5 text-[#4e5968]">순서</td>
                           </tr>
                           <tr>
                             <td className="py-1.5 font-semibold text-[#3182f6]">C열</td>
@@ -202,7 +203,7 @@ export default function ProjectDeploySlidesPage() {
                           <tr>
                             <td className="py-1.5 font-semibold text-[#3182f6]">G열</td>
                             <td className="py-1.5 font-medium text-[#191f28]">이미지</td>
-                            <td className="py-1.5 text-[#e04452] font-semibold">셀 안에 이미지 삽입 기능으로 스크린샷을 넣어주세요. (셀 위 삽입 X)</td>
+                            <td className="py-1.5 text-[#e04452] font-semibold">오류 영역 캡쳐 본</td>
                           </tr>
                           <tr>
                             <td className="py-1.5 font-semibold text-[#3182f6]">H열</td>
@@ -225,7 +226,7 @@ export default function ProjectDeploySlidesPage() {
                   rel="noopener noreferrer"
                   className="w-full py-2.5 bg-[#107c41] hover:bg-[#0b592e] text-white text-xs font-semibold rounded-lg text-center transition-colors cursor-pointer block"
                 >
-                  구글 시트 열기 ↗
+                  구글 시트 열기
                 </a>
               </>
             ) : (
@@ -268,6 +269,13 @@ export default function ProjectDeploySlidesPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse border border-[#e5e8eb]">
+                <colgroup>
+                  <col style={{ width: '50px' }} />
+                  <col style={{ width: '200px' }} />
+                  <col style={{ width: '' }} />
+                  <col style={{ width: '112px' }} />
+                  <col style={{ width: '80px' }} />
+                </colgroup>
                 <thead>
                   <tr className="bg-[#f2f4f6] text-[#4e5968] font-bold border-b border-[#e5e8eb]">
                     <th className="p-2.5 border-r border-[#e5e8eb] w-12 text-center">No</th>
@@ -302,7 +310,7 @@ export default function ProjectDeploySlidesPage() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center justify-center gap-1 px-3 py-1 bg-[#3182f6] hover:bg-[#1b64da] text-white text-[11px] font-semibold rounded transition-colors cursor-pointer"
                         >
-                          슬라이드 열기 ↗
+                          슬라이드 열기 
                         </a>
                       </td>
                       <td className="p-2.5 text-center">

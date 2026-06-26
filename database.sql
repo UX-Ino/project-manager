@@ -133,3 +133,26 @@ create policy "Allow authenticated users on deploy_slides"
 -- 7. 기존 projects 테이블에 컬럼 추가 (마이그레이션용)
 alter table projects add column if not exists is_completed boolean default false;
 
+-- 8. weekly_reports 테이블 생성 (주간보고서 저장)
+create table if not exists weekly_reports (
+  id               uuid primary key default gen_random_uuid(),
+  project_id       uuid references projects(id) on delete cascade,
+  week_label       text not null,          -- 예: "1주차", "2주차"
+  period_from      date,                   -- 점검 기간 시작일
+  period_to        date,                   -- 점검 기간 종료일
+  report_text      text not null,          -- 생성된 보고서 전문
+  cumulative_done  integer default 0,      -- 저장 시점 누적 완료 수
+  cumulative_fail  integer default 0,      -- 저장 시점 누적 미완료 오류 수
+  period_done      integer default 0,      -- 해당 기간 완료 수
+  created_at       timestamptz default now()
+);
+
+alter table weekly_reports enable row level security;
+
+drop policy if exists "Allow authenticated users on weekly_reports" on weekly_reports;
+create policy "Allow authenticated users on weekly_reports"
+  on weekly_reports for all
+  to authenticated
+  using (true)
+  with check (true);
+

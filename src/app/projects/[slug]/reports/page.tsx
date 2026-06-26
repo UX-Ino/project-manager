@@ -5,8 +5,7 @@ import { useParams } from 'next/navigation';
 import { useProject } from '../../../../context/ProjectContext';
 import { supabase } from '../../../../lib/supabaseClient';
 import {
-  Loader2, AlertCircle, ChevronRight, Check,
-  ClipboardList, Calendar, TrendingUp, AlertTriangle
+  Loader2, AlertCircle, Calendar
 } from 'lucide-react';
 
 interface WBSRow {
@@ -52,11 +51,6 @@ const PHASE_META: Record<Phase, { label: string; color: string }> = {
   done:        { label: '완료 후',  color: '#1f9d6b' },
 };
 
-const TAG_META: Record<string, { label: string; color: string }> = {
-  risk: { label: '⚠️ 리스크', color: '#d98a2b' },
-  doc:  { label: '📄 산출물', color: '#3182f6' },
-  ext:  { label: '🔗 외부',   color: '#1f9d6b' },
-};
 
 export default function ProjectReportsPage() {
   const params      = useParams();
@@ -72,6 +66,54 @@ export default function ProjectReportsPage() {
 
   // 접근성 점검 탭 상태
   const [selectedPlatform, setSelectedPlatform] = useState<'web' | 'ios' | 'android'>('web');
+
+  // ── 공통 날짜 헬퍼 ──
+  const getThisWeek = () => {
+    const today = new Date();
+    const day = today.getDay();
+    const mon = new Date(today);
+    mon.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    return { from: fmt(mon), to: fmt(sun) };
+  };
+
+  const getPresetRange = (preset: 'thisWeek' | 'nextWeek' | 'thisMonth' | 'all') => {
+    const today = new Date();
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    const day = today.getDay();
+    if (preset === 'thisWeek') {
+      return getThisWeek();
+    } else if (preset === 'nextWeek') {
+      const nextMon = new Date(today);
+      nextMon.setDate(today.getDate() + (day === 0 ? 1 : 8 - day));
+      const nextSun = new Date(nextMon);
+      nextSun.setDate(nextMon.getDate() + 6);
+      return { from: fmt(nextMon), to: fmt(nextSun) };
+    } else if (preset === 'thisMonth') {
+      return {
+        from: fmt(new Date(today.getFullYear(), today.getMonth(), 1)),
+        to:   fmt(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+      };
+    }
+    return { from: '', to: '' };
+  };
+
+  // ── WBS 날짜 범위 필터 ──
+  const [dateRange, setDateRange] = useState<{ from: string; to: string }>(getThisWeek);
+  const [showCompleted, setShowCompleted] = useState(false);
+
+  const applyPreset = (preset: 'thisWeek' | 'nextWeek' | 'thisMonth' | 'all') => {
+    setDateRange(getPresetRange(preset));
+  };
+
+  // ── 접근성 날짜 범위 필터 ──
+  const [a11yDateRange, setA11yDateRange] = useState<{ from: string; to: string }>(getThisWeek);
+
+  const applyA11yPreset = (preset: 'thisWeek' | 'nextWeek' | 'thisMonth' | 'all') => {
+    setA11yDateRange(getPresetRange(preset));
+  };
 
   const fetchItems = useCallback(async (pId: string) => {
     if (!pId) return;
@@ -130,19 +172,7 @@ export default function ProjectReportsPage() {
       };
     });
 
-    // By tag
-    const tags = Object.keys(TAG_META).map(tag => {
-      const tagItems = pmItems.filter(i => i.tag === tag);
-      const tTotal   = tagItems.length;
-      const tDone    = tagItems.filter(i => i.checked).length;
-      const tLeft    = tTotal - tDone;
-      return { tag, tTotal, tDone, tLeft, pct: tTotal > 0 ? Math.round((tDone / tTotal) * 100) : 0 };
-    });
-
-    // Unchecked risk count
-    const riskLeft = pmItems.filter(i => i.tag === 'risk' && !i.checked).length;
-
-    return { total, completed, rate, pending, phases, tags, riskLeft };
+    return { total, completed, rate, pending, phases };
   }, [items]);
 
   // ── WBS Stats ──
@@ -244,14 +274,14 @@ export default function ProjectReportsPage() {
 
   const a11yStats = useMemo(() => {
     const a11yItems = items.filter(item => item.phase === 'accessibility');
-    const demoA11y = {
-      web:     { pass: 25, fail: 6, na: 2, unchecked: 0, total: 33 },
-      ios:     { pass: 18, fail: 4, na: 3, unchecked: 8, total: 33 },
-      android: { pass: 14, fail: 3, na: 4, unchecked: 12, total: 33 },
+    const zeroA11y = {
+      web:     { pass: 0, fail: 0, na: 0, unchecked: 0, total: 0 },
+      ios:     { pass: 0, fail: 0, na: 0, unchecked: 0, total: 0 },
+      android: { pass: 0, fail: 0, na: 0, unchecked: 0, total: 0 },
     };
 
     if (a11yItems.length === 0) {
-      return demoA11y;
+      return zeroA11y;
     }
 
     const stats = {
@@ -277,10 +307,6 @@ export default function ProjectReportsPage() {
       }
     });
 
-    if (stats.web.total === 0) stats.web = demoA11y.web;
-    if (stats.ios.total === 0) stats.ios = demoA11y.ios;
-    if (stats.android.total === 0) stats.android = demoA11y.android;
-
     return stats;
   }, [items]);
 
@@ -304,6 +330,9 @@ export default function ProjectReportsPage() {
     const today = new Date();
     today.setHours(0,0,0,0);
 
+    const fromDate = dateRange.from ? new Date(dateRange.from + 'T00:00:00') : null;
+    const toDate   = dateRange.to   ? new Date(dateRange.to   + 'T23:59:59') : null;
+
     const fmtMD = (dateStr: string) => {
       const d = new Date(dateStr);
       return `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
@@ -314,7 +343,6 @@ export default function ProjectReportsPage() {
       target.setHours(0,0,0,0);
       const diffTime = target.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
       if (diffDays === 0) return 'D-DAY';
       if (diffDays > 0) return `D-${diffDays}`;
       return `D+${Math.abs(diffDays)}`;
@@ -325,7 +353,7 @@ export default function ProjectReportsPage() {
       const dday = getDdayLabel(endStr);
       const isOverdue = dday.startsWith('D+');
       const isToday = dday === 'D-DAY';
-      
+
       let phaseLabel = '구축';
       let phaseBg = '#e3f6f1';
       let phaseColor = '#0d8a72';
@@ -355,6 +383,10 @@ export default function ProjectReportsPage() {
         }
       }
 
+      const endDate = new Date(endStr);
+      endDate.setHours(0,0,0,0);
+      const inRange = (!fromDate || endDate >= fromDate) && (!toDate || endDate <= toDate);
+
       return {
         id: task.id,
         phase: phaseLabel,
@@ -371,20 +403,67 @@ export default function ProjectReportsPage() {
         statusBg,
         statusColor,
         rawDdayNum: isOverdue ? 9999 : (isToday ? 0 : parseInt(dday.replace('D-', ''))),
+        inRange,
       };
     });
 
     return resolved
-      .filter(item => item.statusLabel !== '완료')
-      .sort((a, b) => a.rawDdayNum - b.rawDdayNum)
-      .slice(0, 5);
-  }, [wbsRows]);
+      .filter(item => item.inRange && (showCompleted || item.statusLabel !== '완료'))
+      .sort((a, b) => a.rawDdayNum - b.rawDdayNum);
+  }, [wbsRows, dateRange, showCompleted]);
 
   const deadlineCount = useMemo(() => {
     return wbsDeadlineItems.filter(item => item.dday === 'D-DAY' || item.dday.startsWith('D+') || item.dday === 'D-1').length;
   }, [wbsDeadlineItems]);
 
-  const donutGradient = `conic-gradient(#3182f6 0 ${pmStats.rate}%, #eef1f5 ${pmStats.rate}% 100%)`;
+  // ── 접근성 항목 (due_date 기준 필터) ──
+  const a11yFilteredItems = useMemo(() => {
+    const a11yItems = items.filter(i => i.phase === 'accessibility');
+    const fromDate = a11yDateRange.from ? new Date(a11yDateRange.from + 'T00:00:00') : null;
+    const toDate   = a11yDateRange.to   ? new Date(a11yDateRange.to   + 'T23:59:59') : null;
+
+    const getStatus = (item: ChecklistItem): { label: string; color: string; bg: string } => {
+      let checkStatus = '';
+      if (item.memo) {
+        try { const p = JSON.parse(item.memo); checkStatus = p.check_status || ''; } catch {}
+      }
+      if (checkStatus.includes('현행유지') || checkStatus.includes('현행 유지'))
+        return { label: '현행유지', color: '#6b7488', bg: '#f2f4f9' };
+
+      const tag = (item.tag || '').trim();
+      if (tag.includes('검수완료') || tag.includes('조치완료') || item.checked)
+        return { label: '통과', color: '#178055', bg: '#e6f6ee' };
+      if (tag.includes('조치필요') || tag.includes('오류') || tag.includes('실패'))
+        return { label: '실패', color: '#d11d44', bg: '#fdeaee' };
+      if (tag.includes('해당없음'))
+        return { label: '해당없음', color: '#c47e10', bg: '#fff7ec' };
+      return { label: '미점검', color: '#5a6478', bg: '#eef0f5' };
+    };
+
+    const filtered = a11yItems.filter(item => {
+      if (!item.due_date) return false;
+      const d = new Date(item.due_date + 'T00:00:00');
+      return (!fromDate || d >= fromDate) && (!toDate || d <= toDate);
+    });
+
+    // 그룹명별로 병합
+    const groups: Record<string, { items: Array<{ id: string; text: string; due: string; assignee: string; status: ReturnType<typeof getStatus> }> }> = {};
+    filtered.forEach(item => {
+      const group = item.group_name || '기타';
+      if (!groups[group]) groups[group] = { items: [] };
+      const d = new Date(item.due_date! + 'T00:00:00');
+      const due = `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+      groups[group].items.push({
+        id: item.id,
+        text: item.text,
+        due,
+        assignee: item.assignee || '미지정',
+        status: getStatus(item),
+      });
+    });
+
+    return { groups, total: filtered.length };
+  }, [items, a11yDateRange]);
 
   if (!currentProject) {
     return (
@@ -566,139 +645,74 @@ export default function ProjectReportsPage() {
             </section>
           </div>
 
-          {/* PM Checklist Details Breakdown */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Phase breakdown bar chart */}
-            <div className="md:col-span-2 bg-white border border-[#e8ecf3] rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[14px] font-extrabold text-[#1a2030]">단계별 완료 현황 상세</span>
-                <span className="text-xs text-[#8a93a5]">{pmStats.completed}/{pmStats.total} 완료</span>
+
+
+          {/* WBS 마감 + 접근성 리스트 좌우 배치 */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+
+          {/* WBS 마감 항목 테이블 */}
+          <section className="bg-white border border-[#e8ecf3] rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex flex-col gap-3 p-4 border-b border-[#eef1f6] shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <h3 className="text-[14px] font-extrabold text-[#101727]">WBS 마감 항목</h3>
+                  {deadlineCount > 0 && (
+                    <span className="text-[11px] font-bold text-[#c81e44] bg-[#fdf1f3] px-2.5 py-0.5 rounded-full font-sans">
+                      마감 임박 {deadlineCount}건
+                    </span>
+                  )}
+                  <span className="text-[11px] font-semibold text-[#6b7488] bg-[#f2f4f9] px-2 py-0.5 rounded-md font-sans">
+                    총 {wbsDeadlineItems.length}건
+                  </span>
+                </div>
+                {/* 완료 포함 토글 */}
+                <button
+                  onClick={() => setShowCompleted(v => !v)}
+                  className={`flex items-center gap-1.5 text-[11.5px] font-semibold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                    showCompleted
+                      ? 'bg-[#e6f6ee] border-[#b6e0cc] text-[#178055]'
+                      : 'bg-[#f5f6f9] border-[#e3e7ef] text-[#6b7488] hover:border-[#c5c9d6]'
+                  }`}
+                >
+                  <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 ${
+                    showCompleted ? 'bg-[#22a06b] border-[#22a06b]' : 'border-[#b0b8c9] bg-white'
+                  }`}>
+                    {showCompleted && <span className="text-white text-[9px] font-black">✓</span>}
+                  </span>
+                  완료 포함
+                </button>
               </div>
-              <div className="flex flex-col gap-4 font-sans">
-                {pmStats.phases.map(({ phase, pTotal, pDone, pct, color, name }) => {
+
+              {/* 날짜 필터 컨트롤 */}
+              <div className="flex flex-wrap items-center gap-2">
+                {(['thisWeek', 'nextWeek', 'thisMonth', 'all'] as const).map(preset => {
+                  const labels = { thisWeek: '이번 주', nextWeek: '다음 주', thisMonth: '이번 달', all: '전체' };
+                  const pr = getPresetRange(preset);
+                  const isActive = preset === 'all'
+                    ? !dateRange.from && !dateRange.to
+                    : dateRange.from === pr.from && dateRange.to === pr.to;
                   return (
-                    <div key={phase} className="flex items-center gap-3">
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ background: color }}
-                      />
-                      <span className="text-[13px] font-medium w-16 shrink-0 text-[#46506a]">
-                        {name}
-                      </span>
-                      <div className="flex-1 h-2.5 rounded-full overflow-hidden bg-[#f1f3f6]">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%`, background: color }}
-                        />
-                      </div>
-                      <span className="text-[12px] font-semibold w-8 text-right shrink-0 text-[#1a2030]">
-                        {pct}%
-                      </span>
-                      <span className="text-[11px] w-14 shrink-0 text-[#8a93a5]">
-                        {pDone}/{pTotal}
-                      </span>
-                    </div>
+                    <button key={preset} onClick={() => applyPreset(preset)}
+                      className={`text-[11.5px] font-semibold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                        isActive ? 'bg-[#3182f6] border-[#3182f6] text-white shadow-sm' : 'bg-white border-[#e3e7ef] text-[#5a6478] hover:border-[#b0b8c9]'
+                      }`}>
+                      {labels[preset]}
+                    </button>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* Completion rate donut */}
-            <div className="bg-white border border-[#e8ecf3] rounded-2xl p-5 shadow-sm flex flex-col items-center justify-center gap-3">
-              <span className="text-[14px] font-extrabold self-start text-[#1a2030]">전체 완료율</span>
-              <div className="relative my-2 select-none">
-                <div
-                  className="w-36 h-36 rounded-full"
-                  style={{ background: donutGradient }}
-                />
-                {/* Hole */}
-                <div
-                  className="absolute inset-0 m-auto w-24 h-24 rounded-full flex flex-col items-center justify-center bg-white"
-                  style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', position: 'absolute' }}
-                >
-                  <span className="text-3xl font-bold leading-none text-[#1a2030]">{pmStats.rate}%</span>
-                  <span className="text-[11px] mt-0.5 text-[#8a93a5]">완료</span>
+                <div className="w-px h-5 bg-[#e3e7ef] mx-0.5" />
+                <div className="flex items-center gap-1.5 font-sans">
+                  <Calendar className="w-3.5 h-3.5 text-[#9aa2b3] shrink-0" />
+                  <input type="date" value={dateRange.from}
+                    onChange={e => setDateRange(v => ({ ...v, from: e.target.value }))}
+                    className="text-[11.5px] border border-[#e3e7ef] rounded-lg px-2.5 py-1.5 text-[#3a4358] bg-white outline-none focus:border-[#3182f6] transition-colors cursor-pointer" />
+                  <span className="text-[11px] text-[#9aa2b3] font-medium">~</span>
+                  <input type="date" value={dateRange.to}
+                    onChange={e => setDateRange(v => ({ ...v, to: e.target.value }))}
+                    className="text-[11.5px] border border-[#e3e7ef] rounded-lg px-2.5 py-1.5 text-[#3a4358] bg-white outline-none focus:border-[#3182f6] transition-colors cursor-pointer" />
                 </div>
               </div>
-              <p className="text-[12px] text-center text-[#7a8396] font-sans">
-                전체 {pmStats.total}개 중 {pmStats.completed}개 완료
-              </p>
-            </div>
-          </div>
-
-          {/* Tag breakdown */}
-          <div className="bg-white border border-[#e8ecf3] rounded-2xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[14px] font-extrabold text-[#1a2030]">태그별 현황</span>
-              {pmStats.riskLeft > 0 && (
-                <span
-                  className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full text-[#e0413f] bg-[#fce8e7]"
-                >
-                  미완료 리스크 {pmStats.riskLeft}건
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col gap-4 font-sans">
-              {pmStats.tags.map(({ tag, tTotal, tDone, tLeft, pct }) => {
-                const meta = TAG_META[tag];
-                return (
-                  <div key={tag} className="flex items-center gap-3">
-                    <span
-                      className="w-2.5 h-2.5 rounded-sm shrink-0"
-                      style={{ background: meta.color }}
-                    />
-                    <span className="text-[13px] font-medium w-20 shrink-0 text-[#46506a]">
-                      {meta.label}
-                    </span>
-                    <div className="flex-1 h-2.5 rounded-full overflow-hidden bg-[#f1f3f6]">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: tTotal > 0 ? `${pct}%` : '0%', background: meta.color }}
-                      />
-                    </div>
-                    <span className="text-[12px] font-bold w-8 text-right shrink-0 text-[#1a2030]">
-                      {tDone}
-                    </span>
-                    <span className="text-[11px] w-20 shrink-0 text-[#8a93a5]">
-                      완료 / 잔여 {tLeft}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Summary card grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-sans">
-            {pmStats.phases.map(({ phase, pTotal, pDone, color, name }) => {
-              const left = pTotal - pDone;
-              return (
-                <div key={phase} className="bg-white border border-[#e8ecf3] rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="w-2 h-2 rounded-full" style={{ background: color }} />
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8a93a5]">
-                      {name}
-                    </span>
-                  </div>
-                  <div className="text-2xl font-bold text-[#1a2030]">{pDone}</div>
-                  <div className="text-[11px] mt-0.5" style={{ color: left > 0 ? '#d98a2b' : '#8a93a5' }}>
-                    {left > 0 ? `잔여 ${left}개` : '모두 완료'}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* 이번 주 마감 WBS 항목 테이블 */}
-          <section className="bg-white border border-[#e8ecf3] rounded-2xl shadow-sm overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-[#eef1f6] shrink-0">
-              <div className="flex items-center gap-2.5">
-                <h3 className="text-[14px] font-extrabold text-[#101727]">이번 주 마감 WBS 항목</h3>
-                <span className="text-[11px] font-bold text-[#c81e44] bg-[#fdf1f3] px-2.5 py-0.5 rounded-full font-sans">
-                  마감 임박 {deadlineCount}건
-                </span>
-              </div>
-              <span className="text-[12px] text-[#9aa2b3] font-medium font-sans">이번 주 미완료 작업 목록</span>
             </div>
 
             {/* Table header */}
@@ -715,56 +729,127 @@ export default function ProjectReportsPage() {
             <div className="divide-y divide-[#f1f3f8] overflow-y-auto font-sans">
               {wbsDeadlineItems.length === 0 ? (
                 <div className="p-10 text-center text-xs text-[#9aa2b3] font-semibold">
-                  이번 주 마감 일정이 완료되었거나 대기 중인 작업이 없습니다.
+                  선택한 기간에 해당하는 WBS 항목이 없습니다.
                 </div>
               ) : (
                 wbsDeadlineItems.map((r) => (
-                  <div
-                    key={r.id}
-                    className="grid grid-cols-[80px_1fr_100px_100px_130px_80px] items-center px-5 py-3.5 text-xs hover:bg-[#fafbfd] transition-colors"
-                  >
+                  <div key={r.id}
+                    className="grid grid-cols-[80px_1fr_100px_100px_130px_80px] items-center px-5 py-3.5 text-xs hover:bg-[#fafbfd] transition-colors">
                     <div>
-                      <span
-                        style={{ color: r.phaseColor, backgroundColor: r.phaseBg }}
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-md"
-                      >
-                        {r.phase}
-                      </span>
+                      <span style={{ color: r.phaseColor, backgroundColor: r.phaseBg }}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-md">{r.phase}</span>
                     </div>
-                    <div className="font-bold text-[#22304a] truncate pr-4 leading-normal" title={r.task}>
-                      {r.task}
-                    </div>
+                    <div className="font-bold text-[#22304a] truncate pr-4 leading-normal" title={r.task}>{r.task}</div>
                     <div className="text-[#5a6478] font-medium">{r.assignee}</div>
                     <div className="text-[#5a6478] font-medium flex items-center gap-1.5">
                       {r.due}
-                      <span style={{ color: r.ddayColor }} className="text-[10.5px] font-extrabold">
-                        {r.dday}
-                      </span>
+                      <span style={{ color: r.ddayColor }} className="text-[10.5px] font-extrabold">{r.dday}</span>
                     </div>
                     <div className="flex items-center gap-2.5">
                       <div className="flex-1 h-1.5 bg-[#eef0f5] rounded-full overflow-hidden">
-                        <div
-                          style={{ width: `${r.progress}%`, backgroundColor: r.barColor }}
-                          className="h-full rounded-full transition-all duration-300"
-                        ></div>
+                        <div style={{ width: `${r.progress}%`, backgroundColor: r.barColor }}
+                          className="h-full rounded-full transition-all duration-300" />
                       </div>
-                      <span className="text-[10.5px] font-bold text-[#5a6478] w-8 text-right shrink-0">
-                        {r.progress}%
-                      </span>
+                      <span className="text-[10.5px] font-bold text-[#5a6478] w-8 text-right shrink-0">{r.progress}%</span>
                     </div>
                     <div className="text-right">
-                      <span
-                        style={{ color: r.statusColor, backgroundColor: r.statusBg }}
-                        className="text-[10.5px] font-bold px-2.5 py-1 rounded-full inline-block"
-                      >
-                        {r.statusLabel}
-                      </span>
+                      <span style={{ color: r.statusColor, backgroundColor: r.statusBg }}
+                        className="text-[10.5px] font-bold px-2.5 py-1 rounded-full inline-block">{r.statusLabel}</span>
                     </div>
                   </div>
                 ))
               )}
             </div>
           </section>
+
+          {/* 접근성 점검 리스트 */}
+          <section className="bg-white border border-[#e8ecf3] rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex flex-col gap-3 p-4 border-b border-[#eef1f6] shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <h3 className="text-[14px] font-extrabold text-[#101727]">접근성 점검 리스트</h3>
+                  <span className="text-[10.5px] font-medium text-[#9aa2b3]">· KWCAG 2.2</span>
+                  <span className="text-[11px] font-semibold text-[#6b7488] bg-[#f2f4f9] px-2 py-0.5 rounded-md font-sans">
+                    총 {a11yFilteredItems.total}건
+                  </span>
+                </div>
+              </div>
+
+              {/* 날짜 필터 */}
+              <div className="flex flex-wrap items-center gap-2">
+                {(['thisWeek', 'nextWeek', 'thisMonth', 'all'] as const).map(preset => {
+                  const labels = { thisWeek: '이번 주', nextWeek: '다음 주', thisMonth: '이번 달', all: '전체' };
+                  const pr = getPresetRange(preset);
+                  const isActive = preset === 'all'
+                    ? !a11yDateRange.from && !a11yDateRange.to
+                    : a11yDateRange.from === pr.from && a11yDateRange.to === pr.to;
+                  return (
+                    <button key={preset} onClick={() => applyA11yPreset(preset)}
+                      className={`text-[11.5px] font-semibold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                        isActive ? 'bg-[#3182f6] border-[#3182f6] text-white shadow-sm' : 'bg-white border-[#e3e7ef] text-[#5a6478] hover:border-[#b0b8c9]'
+                      }`}>
+                      {labels[preset]}
+                    </button>
+                  );
+                })}
+                <div className="w-px h-5 bg-[#e3e7ef] mx-0.5" />
+                <div className="flex items-center gap-1.5 font-sans">
+                  <Calendar className="w-3.5 h-3.5 text-[#9aa2b3] shrink-0" />
+                  <input type="date" value={a11yDateRange.from}
+                    onChange={e => setA11yDateRange(v => ({ ...v, from: e.target.value }))}
+                    className="text-[11.5px] border border-[#e3e7ef] rounded-lg px-2.5 py-1.5 text-[#3a4358] bg-white outline-none focus:border-[#3182f6] transition-colors cursor-pointer" />
+                  <span className="text-[11px] text-[#9aa2b3] font-medium">~</span>
+                  <input type="date" value={a11yDateRange.to}
+                    onChange={e => setA11yDateRange(v => ({ ...v, to: e.target.value }))}
+                    className="text-[11.5px] border border-[#e3e7ef] rounded-lg px-2.5 py-1.5 text-[#3a4358] bg-white outline-none focus:border-[#3182f6] transition-colors cursor-pointer" />
+                </div>
+              </div>
+            </div>
+
+            {/* 접근성 목록 본문 */}
+            <div className="overflow-y-auto flex-1">
+              {a11yFilteredItems.total === 0 ? (
+                <div className="p-10 text-center text-xs text-[#9aa2b3] font-semibold">
+                  선택한 기간에 해당하는 접근성 항목이 없습니다.
+                </div>
+              ) : (
+                Object.entries(a11yFilteredItems.groups).map(([group, { items: gItems }]) => (
+                  <div key={group}>
+                    {/* 그룹 헤더 */}
+                    <div className="flex items-center justify-between px-4 py-2 bg-[#f8f9fc] border-b border-[#eef1f6] sticky top-0 z-10">
+                      <span className="text-[11px] font-bold text-[#3a4358] truncate">{group}</span>
+                      <span className="text-[10.5px] font-semibold text-[#9aa2b3] shrink-0 ml-2">{gItems.length}건</span>
+                    </div>
+                    {/* 그룹 항목 */}
+                    {gItems.map(item => (
+                      <div key={item.id}
+                        className="flex items-start gap-3 px-4 py-3 border-b border-[#f1f3f8] hover:bg-[#fafbfd] transition-colors">
+                        {/* 상태 배지 */}
+                        <span
+                          style={{ color: item.status.color, backgroundColor: item.status.bg }}
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 mt-0.5 whitespace-nowrap">
+                          {item.status.label}
+                        </span>
+                        {/* 항목명 */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-semibold text-[#22304a] leading-snug break-words">{item.text}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10.5px] text-[#9aa2b3] font-medium">{item.due}</span>
+                            {item.assignee !== '미지정' && (
+                              <span className="text-[10.5px] text-[#6b7488] font-medium">· {item.assignee}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          </div>{/* end 2-col grid */}
         </>
       )}
     </section>
