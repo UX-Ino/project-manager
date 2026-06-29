@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // ─── 타입 정의 ──────────────────────────────────────────────────────────────
 
@@ -37,6 +37,44 @@ function isValidRow(row: A11yRowPayload): boolean {
     typeof row.checked === 'boolean' &&
     typeof row.sort_order === 'number'
   );
+}
+
+// ─── 이미지 영구 저장 헬퍼 ──────────────────────────────────────────────────
+
+async function persistImage(
+  url: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any>,
+  projectId: string,
+  index: number
+): Promise<string> {
+  if (!url.includes('googleusercontent.com')) return url;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return url;
+
+    const contentType = res.headers.get('content-type') ?? 'image/png';
+    const ext = (contentType.split('/')[1] ?? 'png').split(';')[0];
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const path = `a11y/${projectId}/${Date.now()}_${index}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from('images')
+      .upload(path, buffer, { contentType, upsert: true });
+
+    if (error) {
+      console.warn(`[a11y-sync] 이미지 업로드 실패 (${index}):`, error.message);
+      return url;
+    }
+
+    const { data } = supabase.storage.from('images').getPublicUrl(path);
+    return data.publicUrl;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.warn(`[a11y-sync] 이미지 처리 실패 (${index}):`, msg);
+    return url;
+  }
 }
 
 // ─── POST 핸들러 ─────────────────────────────────────────────────────────────
@@ -159,8 +197,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 7. 새 데이터 삽입
-    const insertData = rows.map(row => ({
+    // 7. 이미지 영구 저장 처리 후 데이터 삽입
+    const resolvedImages = await Promise.all(
+      rows.map((row, idx) =>
+        row.image_url ? persistImage(row.image_url, supabase, project_id, idx) : Promise.resolve(null)
+      )
+    );
+
+    const insertData = rows.map((row, idx) => ({
       project_id,
       phase: 'accessibility',
       group_name: row.group_name,
@@ -170,7 +214,7 @@ export async function POST(req: NextRequest) {
       due_date: row.due_date || null,
       memo: row.memo,
       tag: row.tag || null,
-      image_url: row.image_url || null,
+      image_url: resolvedImages[idx],
       sort_order: row.sort_order,
       updated_at: new Date().toISOString(),
     }));

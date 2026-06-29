@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useProject } from '../context/ProjectContext';
 import {
-  LogOut, User, CheckSquare, LayoutDashboard, Files, Settings, Users, ClipboardList
+  LogOut, CheckSquare, LayoutDashboard, Settings, Users, ClipboardList
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -128,7 +128,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onClick={onClose}
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
                 style={
-                  ['guide','reports','wbs','a11y','weekly','deploy-slides','documents'].includes(activeMenu)
+                  ['guide','reports','wbs','a11y','weekly','deploy-slides','issues'].includes(activeMenu)
                     ? { backgroundColor: '#eff6ff', color: '#3182f6', fontWeight: 600 }
                     : { color: '#4e5968' }
                 }
@@ -146,7 +146,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   { key: 'a11y', label: '접근성 점검리스트' },
                   { key: 'deploy-slides', label: '배포리스트' },
                   { key: 'weekly', label: '주간보고서 생성기' },
-                  { key: 'documents', label: '산출물 보관함' },
+                  { key: 'issues', label: '이슈사항' },
                 ].map(({ key, label }) => {
                   const isTabActive = activeMenu === key;
                   return (

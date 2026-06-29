@@ -156,3 +156,26 @@ create policy "Allow authenticated users on weekly_reports"
   using (true)
   with check (true);
 
+-- 9. issues 테이블 생성 (이슈사항 등록/관리)
+create table if not exists issues (
+  id          uuid primary key default gen_random_uuid(),
+  project_id  uuid references projects(id) on delete cascade,
+  title       text not null,
+  description text,
+  status      text not null default '예정',   -- 예정 / 진행중 / 완료 / 보류
+  priority    text not null default '중간',   -- 높음 / 중간 / 낮음
+  assignee    text,
+  due_date    date,
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now()
+);
+
+alter table issues enable row level security;
+
+drop policy if exists "Allow authenticated users on issues" on issues;
+create policy "Allow authenticated users on issues"
+  on issues for all
+  to authenticated
+  using (true)
+  with check (true);
+

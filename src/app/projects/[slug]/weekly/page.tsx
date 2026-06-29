@@ -4,7 +4,35 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useProject } from '../../../../context/ProjectContext';
 import { supabase } from '../../../../lib/supabaseClient';
-import { Loader2, AlertCircle, ClipboardCopy, Calendar, FileText, CheckCircle2, XCircle, Clock, BookmarkCheck, Trash2, X } from 'lucide-react';
+import { Loader2, AlertCircle, ClipboardCopy, Calendar, FileText, CheckCircle2, XCircle, Clock, BookmarkCheck, Trash2, X, ChevronDown } from 'lucide-react';
+
+interface WbsRow {
+  id: string;
+  row_order: number;
+  level: number;
+  task_l1: string | null;
+  task_l2: string | null;
+  task_l3: string | null;
+  task_l4: string | null;
+  description: string | null;
+  assignee: string | null;
+  status: string;
+  plan_start: string | null;
+  plan_end: string | null;
+  actual_start: string | null;
+  actual_end: string | null;
+  plan_progress: number;
+  actual_progress: number;
+}
+
+interface WeeklyIssue {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  assignee: string | null;
+  due_date: string | null;
+}
 
 interface ChecklistItem {
   id: string;
@@ -31,6 +59,8 @@ export default function ProjectWeeklyPage() {
   const projectId = currentProject?.id || '';
 
   const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [wbsRows, setWbsRows] = useState<WbsRow[]>([]);
+  const [activeIssues, setActiveIssues] = useState<WeeklyIssue[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
 
   // 저장된 보고서 목록
@@ -40,9 +70,25 @@ export default function ProjectWeeklyPage() {
     created_at: string; report_text: string;
   }>>([]);
 
-  // 모달 상태
+  // 저장 모달 상태
   const [showModal, setShowModal] = useState(false);
   const [weekLabel, setWeekLabel] = useState('');
+
+  // 영역별 아코디언 (펼쳐진 그룹명 Set — 기본 전체 접힘)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const toggleGroup = (group: string) =>
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      next.has(group) ? next.delete(group) : next.add(group);
+      return next;
+    });
+
+  // 보고서 뷰 모달 상태
+  const [viewReport, setViewReport] = useState<{
+    id: string; week_label: string; period_from: string; period_to: string;
+    cumulative_done: number; cumulative_fail: number; period_done: number;
+    created_at: string; report_text: string;
+  } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // ── 날짜 범위 ──
@@ -121,6 +167,19 @@ export default function ProjectWeeklyPage() {
 
   useEffect(() => { if (projectId) fetchChecklist(projectId); }, [projectId, fetchChecklist]);
 
+  // WBS 행 조회
+  const fetchWbsRows = useCallback(async (pId: string) => {
+    if (!pId) return;
+    const { data } = await supabase
+      .from('wbs_rows')
+      .select('*')
+      .eq('project_id', pId)
+      .order('row_order', { ascending: true });
+    setWbsRows(data || []);
+  }, []);
+
+  useEffect(() => { if (projectId) fetchWbsRows(projectId); }, [projectId, fetchWbsRows]);
+
   // 저장된 보고서 조회
   const fetchSavedReports = useCallback(async (pId: string) => {
     if (!pId) return;
@@ -132,6 +191,20 @@ export default function ProjectWeeklyPage() {
   }, []);
 
   useEffect(() => { if (projectId) fetchSavedReports(projectId); }, [projectId, fetchSavedReports]);
+
+  // 이슈 조회 (완료 제외)
+  const fetchActiveIssues = useCallback(async (pId: string) => {
+    if (!pId) return;
+    const { data } = await supabase
+      .from('issues')
+      .select('id, title, status, priority, assignee, due_date')
+      .eq('project_id', pId)
+      .neq('status', '완료')
+      .order('due_date', { ascending: true });
+    setActiveIssues((data as WeeklyIssue[]) || []);
+  }, []);
+
+  useEffect(() => { if (projectId) fetchActiveIssues(projectId); }, [projectId, fetchActiveIssues]);
 
   // ── 접근성 항목 상태 판별 ──
   const getA11yStatus = (item: ChecklistItem): 'pass' | 'fail' | 'na' | 'unchecked' | 'skip' => {
@@ -202,8 +275,8 @@ export default function ProjectWeeklyPage() {
     };
   }, [a11yAll, a11yCumulative, a11yFiltered]);
 
-  // ── 차주 항목 ──
-  const nextWeekItems = useMemo(() => {
+  // ── 차주 WBS 항목 ──
+  const nextWeekWbsItems = useMemo(() => {
     if (!dateRange.to) return [];
     const toDate = new Date(dateRange.to + 'T23:59:59');
     const nextFrom = new Date(toDate);
@@ -212,12 +285,12 @@ export default function ProjectWeeklyPage() {
     const nextTo = new Date(toDate);
     nextTo.setDate(nextTo.getDate() + 7);
     nextTo.setHours(23, 59, 59, 999);
-    return a11yAll.filter(item => {
-      if (!item.due_date) return false;
-      const d = new Date(item.due_date + 'T00:00:00');
+    return wbsRows.filter(row => {
+      if (!row.plan_end) return false;
+      const d = new Date(row.plan_end + 'T00:00:00');
       return d >= nextFrom && d <= nextTo;
     });
-  }, [a11yAll, dateRange.to]);
+  }, [wbsRows, dateRange.to]);
 
   // ── 그룹별 집계 ──
   const groupedItems = useMemo(() => {
@@ -282,19 +355,19 @@ export default function ProjectWeeklyPage() {
         lines.push(`  ▶ ${group}`);
         if (pass.length > 0) {
           lines.push(`    [조치 완료 - ${pass.length}건]`);
-          pass.forEach(i => lines.push(`      - ${i.text}${i.assignee !== '미지정' ? ` (${i.assignee})` : ''}`));
+          [...new Set(pass.map(i => i.text))].forEach(text => lines.push(`      - ${text}`));
         }
         if (fail.length > 0) {
           lines.push(`    [미조치 오류 - ${fail.length}건]`);
-          fail.forEach(i => lines.push(`      - ${i.text}${i.assignee !== '미지정' ? ` (${i.assignee})` : ''}`));
+          [...new Set(fail.map(i => i.text))].forEach(text => lines.push(`      - ${text}`));
         }
         if (na.length > 0) {
           lines.push(`    [해당없음 - ${na.length}건]`);
-          na.forEach(i => lines.push(`      - ${i.text}`));
+          [...new Set(na.map(i => i.text))].forEach(text => lines.push(`      - ${text}`));
         }
         if (unchecked.length > 0) {
           lines.push(`    [미점검 - ${unchecked.length}건]`);
-          unchecked.forEach(i => lines.push(`      - ${i.text}`));
+          [...new Set(unchecked.map(i => i.text))].forEach(text => lines.push(`      - ${text}`));
         }
       });
     } else {
@@ -310,16 +383,32 @@ export default function ProjectWeeklyPage() {
       nextTo.setDate(nextTo.getDate() + 7);
       const fmt2 = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       lines.push(`■ 차주 진행 계획 (${fmt2(nextFrom)} ~ ${fmt2(nextTo)})`);
-      if (nextWeekItems.length > 0) {
-        nextWeekItems.forEach(item => {
-          const due = item.due_date
-            ? (() => { const d = new Date(item.due_date! + 'T00:00:00'); return `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`; })()
+      lines.push(`  [WBS 예정 항목]`);
+      if (nextWeekWbsItems.length > 0) {
+        nextWeekWbsItems.forEach((row: WbsRow) => {
+          const taskName = row.task_l4 || row.task_l3 || row.task_l2 || row.task_l1 || '-';
+          const due = row.plan_end
+            ? (() => { const d = new Date(row.plan_end! + 'T00:00:00'); return `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`; })()
             : '';
-          const assignee = item.assignee && item.assignee !== '미지정' ? ` (${item.assignee})` : '';
-          lines.push(`  - [${due}] ${item.text}${assignee}`);
+          const assignee = row.assignee ? ` (${row.assignee})` : '';
+          const progress = row.plan_progress > 0 ? ` [계획 ${row.plan_progress}%]` : '';
+          lines.push(`  - [${due}] ${taskName}${assignee}${progress}`);
         });
       } else {
-        lines.push(`  - 차주 예정 항목 없음`);
+        lines.push(`  - 차주 예정 WBS 항목 없음`);
+      }
+      lines.push('');
+      lines.push(`  [이슈 사항]`);
+      if (activeIssues.length > 0) {
+        activeIssues.forEach(issue => {
+          const due = issue.due_date
+            ? (() => { const d = new Date(issue.due_date! + 'T00:00:00'); return ` (${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')})`; })()
+            : '';
+          const assignee = issue.assignee ? ` / ${issue.assignee}` : '';
+          lines.push(`  - [${issue.status}] ${issue.title}${due}${assignee}`);
+        });
+      } else {
+        lines.push(`  - 진행 중인 이슈 없음`);
       }
       lines.push('');
     }
@@ -328,12 +417,7 @@ export default function ProjectWeeklyPage() {
     return lines.join('\n');
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generateReport());
-    showToast('클립보드에 복사되었습니다.');
-  };
-
-  const openSaveModal = () => {
+const openSaveModal = () => {
     setWeekLabel(autoWeekLabel);
     setShowModal(true);
   };
@@ -509,58 +593,71 @@ export default function ProjectWeeklyPage() {
 
               {/* 영역별 상세 카드 */}
               <section className="bg-white border border-[#e8ecf3] rounded-2xl shadow-sm overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-[#eef1f6] bg-[#fafbfd]">
-                  <span className="text-[13.5px] font-extrabold text-[#1a2030]">영역별 조치 내역</span>
-                  <span className="text-[11px] text-[#9aa2b3] ml-2">{periodLabel}</span>
+                <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#eef1f6] bg-[#fafbfd]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13.5px] font-extrabold text-[#1a2030]">영역별 조치 내역</span>
+                    <span className="text-[11px] text-[#9aa2b3]">{periodLabel}</span>
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#e6f6ee] text-[#178055]">
+                    완료 {stats.periodDone}건
+                  </span>
                 </div>
                 <div className="overflow-y-auto max-h-[600px]">
                   {Object.entries(groupedItems)
                     .filter(([, v]) => v.pass.length + v.fail.length + v.na.length + v.unchecked.length > 0)
-                    .map(([group, { pass, fail, na, unchecked }]) => (
-                    <div key={group}>
-                      {/* 그룹 헤더 */}
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-[#f4f6fa] border-b border-[#eef1f6] sticky top-0 z-10">
-                        <span className="text-[11.5px] font-bold text-[#3a4358] truncate">{group}</span>
-                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                          {pass.length > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#e6f6ee] text-[#178055]">완료 {pass.length}</span>}
-                          {fail.length > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#fdeaee] text-[#d11d44]">오류 {fail.length}</span>}
-                          {na.length > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#fff7ec] text-[#c47e10]">해당없음 {na.length}</span>}
-                          {unchecked.length > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#eef0f5] text-[#5a6478]">미점검 {unchecked.length}</span>}
-                        </div>
-                      </div>
-                      {/* 항목 */}
-                      {[
-                        ...pass.map(i => ({ ...i, status: 'pass' as const })),
-                        ...fail.map(i => ({ ...i, status: 'fail' as const })),
-                        ...na.map(i => ({ ...i, status: 'na' as const })),
-                        ...unchecked.map(i => ({ ...i, status: 'unchecked' as const })),
-                      ].map((item, idx) => {
-                        const statusConfig = {
-                          pass:      { label: '완료',   color: '#178055', bg: '#e6f6ee' },
-                          fail:      { label: '오류',   color: '#d11d44', bg: '#fdeaee' },
-                          na:        { label: '해당없음', color: '#c47e10', bg: '#fff7ec' },
-                          unchecked: { label: '미점검', color: '#5a6478', bg: '#eef0f5' },
-                        }[item.status];
-                        return (
-                          <div key={idx} className="flex items-start gap-3 px-4 py-2.5 border-b border-[#f4f6fa] hover:bg-[#fafbfd] transition-colors">
-                            <span style={{ color: statusConfig.color, backgroundColor: statusConfig.bg }}
-                              className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 mt-0.5 whitespace-nowrap">
-                              {statusConfig.label}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[11.5px] font-semibold text-[#22304a] leading-snug">{item.text}</p>
-                              {item.assignee !== '미지정' && (
-                                <span className="text-[10.5px] text-[#9aa2b3]">{item.assignee}</span>
-                              )}
+                    .map(([group, { pass, fail, na, unchecked }]) => {
+                      const isOpen = expandedGroups.has(group);
+                      return (
+                        <div key={group}>
+                          {/* 그룹 헤더 — 아코디언 토글 */}
+                          <button
+                            onClick={() => toggleGroup(group)}
+                            className="w-full flex items-center justify-between px-4 py-2.5 bg-[#f4f6fa] border-b border-[#eef1f6] sticky top-0 z-10 hover:bg-[#edf0f7] transition-colors cursor-pointer text-left">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <ChevronDown className={`w-3.5 h-3.5 text-[#8a93a5] shrink-0 transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`} />
+                              <span className="text-[11.5px] font-bold text-[#3a4358] truncate">{group}</span>
                             </div>
-                            {item.due && (
-                              <span className="text-[10.5px] text-[#b0b8c9] font-medium shrink-0">{item.due}</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
+                            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                              {pass.length > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#e6f6ee] text-[#178055]">완료 {pass.length}</span>}
+                              {fail.length > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#fdeaee] text-[#d11d44]">오류 {fail.length}</span>}
+                              {na.length > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#fff7ec] text-[#c47e10]">해당없음 {na.length}</span>}
+                              {unchecked.length > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#eef0f5] text-[#5a6478]">미점검 {unchecked.length}</span>}
+                            </div>
+                          </button>
+                          {/* 항목 — 아코디언 바디 */}
+                          {isOpen && [
+                            ...pass.map(i => ({ ...i, status: 'pass' as const })),
+                            ...fail.map(i => ({ ...i, status: 'fail' as const })),
+                            ...na.map(i => ({ ...i, status: 'na' as const })),
+                            ...unchecked.map(i => ({ ...i, status: 'unchecked' as const })),
+                          ].map((item, idx) => {
+                            const statusConfig = {
+                              pass:      { label: '완료',    color: '#178055', bg: '#e6f6ee' },
+                              fail:      { label: '오류',    color: '#d11d44', bg: '#fdeaee' },
+                              na:        { label: '해당없음', color: '#c47e10', bg: '#fff7ec' },
+                              unchecked: { label: '미점검',  color: '#5a6478', bg: '#eef0f5' },
+                            }[item.status];
+                            return (
+                              <div key={idx} className="flex items-start gap-3 px-4 py-2.5 border-b border-[#f4f6fa] hover:bg-[#fafbfd] transition-colors">
+                                <span style={{ color: statusConfig.color, backgroundColor: statusConfig.bg }}
+                                  className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 mt-0.5 whitespace-nowrap">
+                                  {statusConfig.label}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11.5px] font-semibold text-[#22304a] leading-snug">{item.text}</p>
+                                  {item.assignee !== '미지정' && (
+                                    <span className="text-[10.5px] text-[#9aa2b3]">{item.assignee}</span>
+                                  )}
+                                </div>
+                                {item.due && (
+                                  <span className="text-[10.5px] text-[#b0b8c9] font-medium shrink-0">{item.due}</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
                 </div>
               </section>
 
@@ -568,9 +665,9 @@ export default function ProjectWeeklyPage() {
               <section className="bg-white border border-[#e8ecf3] rounded-2xl shadow-sm overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#eef1f6] bg-[#fafbfd]">
                   <span className="text-[13.5px] font-extrabold text-[#1a2030]">보고서 미리보기</span>
-                  <button onClick={openSaveModal}
+                  <button onClick={() => { navigator.clipboard.writeText(generateReport()); showToast('클립보드에 복사되었습니다.'); }}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-[#3182f6] hover:bg-[#1b64da] text-white text-[11px] font-semibold rounded-lg cursor-pointer transition-all">
-                    <ClipboardCopy className="w-3 h-3" /> 저장
+                    <ClipboardCopy className="w-3 h-3" /> 복사
                   </button>
                 </div>
                 <pre className="text-[11.5px] font-mono text-[#3a4358] leading-relaxed p-5 overflow-y-auto max-h-[600px] whitespace-pre-wrap selection:bg-[#3182f6]/20 bg-[#fafbfd]">
@@ -598,7 +695,8 @@ export default function ProjectWeeklyPage() {
               const createdAt = new Date(r.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
               const period = r.period_from && r.period_to ? `${r.period_from} ~ ${r.period_to}` : r.period_from || '기간 미지정';
               return (
-                <div key={r.id} className="flex items-center gap-4 px-5 py-4 hover:bg-[#fafbfd] transition-colors">
+                <div key={r.id} onClick={() => setViewReport(r)}
+                  className="flex items-center gap-4 px-5 py-4 hover:bg-[#f4f7ff] transition-colors cursor-pointer">
                   {/* 주차 배지 */}
                   <div className="w-14 h-14 rounded-xl bg-[#eef3ff] border border-[#c8d8f8] flex flex-col items-center justify-center shrink-0">
                     <span className="text-[18px] font-extrabold text-[#3182f6] leading-none">{r.week_label.replace('주차', '')}</span>
@@ -620,12 +718,12 @@ export default function ProjectWeeklyPage() {
                   {/* 액션 */}
                   <div className="flex items-center gap-2 shrink-0">
                     <button
-                      onClick={() => { navigator.clipboard.writeText(r.report_text); showToast('클립보드에 복사됐습니다.'); }}
+                      onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(r.report_text); showToast('클립보드에 복사됐습니다.'); }}
                       className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold border border-[#e3e7ef] rounded-lg text-[#5a6478] hover:border-[#3182f6] hover:text-[#3182f6] transition-all cursor-pointer">
                       <ClipboardCopy className="w-3 h-3" /> 복사
                     </button>
                     <button
-                      onClick={() => handleDeleteReport(r.id)}
+                      onClick={e => { e.stopPropagation(); handleDeleteReport(r.id); }}
                       className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold border border-[#e3e7ef] rounded-lg text-[#9aa2b3] hover:border-[#d11d44] hover:text-[#d11d44] transition-all cursor-pointer">
                       <Trash2 className="w-3 h-3" /> 삭제
                     </button>
@@ -704,6 +802,55 @@ export default function ProjectWeeklyPage() {
                 {isSaving ? '저장 중...' : '복사 & 저장'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 보고서 상세 뷰 모달 ── */}
+      {viewReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setViewReport(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col z-10 max-h-[90vh]">
+            {/* 헤더 */}
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-[#eef1f6] shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#eef3ff] border border-[#c8d8f8] flex flex-col items-center justify-center shrink-0">
+                <span className="text-[15px] font-extrabold text-[#3182f6] leading-none">{viewReport.week_label.replace('주차', '')}</span>
+                <span className="text-[8px] font-bold text-[#6b9ce8]">주차</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[15px] font-extrabold text-[#1a2030]">{viewReport.week_label} 보고서</h3>
+                <p className="text-[11px] text-[#9aa2b3] mt-0.5">
+                  {viewReport.period_from && viewReport.period_to
+                    ? `${viewReport.period_from} ~ ${viewReport.period_to}`
+                    : viewReport.period_from || '기간 미지정'}
+                  {' · '}
+                  {new Date(viewReport.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 저장
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => { navigator.clipboard.writeText(viewReport.report_text); showToast('클립보드에 복사됐습니다.'); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[11.5px] font-semibold bg-[#3182f6] hover:bg-[#1b64da] text-white rounded-lg cursor-pointer transition-all">
+                  <ClipboardCopy className="w-3.5 h-3.5" /> 복사
+                </button>
+                <button onClick={() => setViewReport(null)}
+                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#f2f4f9] text-[#9aa2b3] cursor-pointer transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* 통계 배지 */}
+            <div className="flex items-center gap-3 px-6 py-3 border-b border-[#f1f3f8] bg-[#fafbfd] shrink-0">
+              <span className="text-[10.5px] font-semibold px-2.5 py-1 rounded-md bg-[#e6f6ee] text-[#178055]">누적완료 {viewReport.cumulative_done}건</span>
+              <span className="text-[10.5px] font-semibold px-2.5 py-1 rounded-md bg-[#fdeaee] text-[#d11d44]">미조치 {viewReport.cumulative_fail}건</span>
+              <span className="text-[10.5px] font-semibold px-2.5 py-1 rounded-md bg-[#eef3ff] text-[#3182f6]">금주 +{viewReport.period_done}건</span>
+            </div>
+
+            {/* 보고서 본문 */}
+            <pre className="text-[12px] font-mono text-[#3a4358] leading-relaxed p-6 overflow-y-auto whitespace-pre-wrap selection:bg-[#3182f6]/20">
+              {viewReport.report_text}
+            </pre>
           </div>
         </div>
       )}

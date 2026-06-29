@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useProject } from '../../../../context/ProjectContext';
 import { supabase } from '../../../../lib/supabaseClient';
 import {
-  Loader2, AlertCircle, Calendar
+  Loader2, AlertCircle, Calendar, ChevronDown
 } from 'lucide-react';
 
 interface WBSRow {
@@ -102,7 +102,16 @@ export default function ProjectReportsPage() {
 
   // ── WBS 날짜 범위 필터 ──
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>(getThisWeek);
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(true);
+
+  // 접근성 점검 아코디언 (펼쳐진 그룹 Set — 기본 전체 접힘)
+  const [expandedA11yGroups, setExpandedA11yGroups] = useState<Set<string>>(new Set());
+  const toggleA11yGroup = (group: string) =>
+    setExpandedA11yGroups(prev => {
+      const next = new Set(prev);
+      next.has(group) ? next.delete(group) : next.add(group);
+      return next;
+    });
 
   const applyPreset = (preset: 'thisWeek' | 'nextWeek' | 'thisMonth' | 'all') => {
     setDateRange(getPresetRange(preset));
@@ -537,7 +546,7 @@ export default function ProjectReportsPage() {
             <section className="bg-white border border-[#e8ecf3] rounded-2xl p-5 shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-3.5">
                 <h3 className="text-[13.5px] font-bold text-[#3a4358]">
-                  접근성 점검 현황 <span className="text-[#9aa2b3] font-medium text-[11.5px]">· KWCAG 2.2</span>
+                  아직 미정 데이터 어떤걸쓸지..
                 </h3>
                 {/* Platform Selector Tabs */}
                 <div className="flex gap-0.5 bg-[#f2f4f9] p-0.5 rounded-lg">
@@ -716,7 +725,7 @@ export default function ProjectReportsPage() {
             </div>
 
             {/* Table header */}
-            <div className="grid grid-cols-[80px_1fr_100px_100px_130px_80px] px-5 py-2.5 bg-[#fafbfd] border-b border-[#eef1f6] text-[11px] font-bold text-[#8a93a6] tracking-wider select-none">
+            <div className="grid grid-cols-[50px_1fr_70px_80px_80px_50px] px-5 py-2.5 bg-[#fafbfd] border-b border-[#eef1f6] text-[11px] font-bold text-[#8a93a6] tracking-wider select-none">
               <div>단계</div>
               <div>업무</div>
               <div>담당자</div>
@@ -734,7 +743,7 @@ export default function ProjectReportsPage() {
               ) : (
                 wbsDeadlineItems.map((r) => (
                   <div key={r.id}
-                    className="grid grid-cols-[80px_1fr_100px_100px_130px_80px] items-center px-5 py-3.5 text-xs hover:bg-[#fafbfd] transition-colors">
+                    className="grid grid-cols-[50px_1fr_70px_80px_80px_50px] items-center px-5 py-3.5 text-xs hover:bg-[#fafbfd] transition-colors">
                     <div>
                       <span style={{ color: r.phaseColor, backgroundColor: r.phaseBg }}
                         className="text-[10px] font-bold px-2 py-0.5 rounded-md">{r.phase}</span>
@@ -745,12 +754,12 @@ export default function ProjectReportsPage() {
                       {r.due}
                       <span style={{ color: r.ddayColor }} className="text-[10.5px] font-extrabold">{r.dday}</span>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex-1 h-1.5 bg-[#eef0f5] rounded-full overflow-hidden">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10.5px] font-bold text-[#5a6478]">{r.progress}%</span>
+                      <div className="w-3/4 h-3 bg-[#eef0f5] rounded-full overflow-hidden">
                         <div style={{ width: `${r.progress}%`, backgroundColor: r.barColor }}
                           className="h-full rounded-full transition-all duration-300" />
                       </div>
-                      <span className="text-[10.5px] font-bold text-[#5a6478] w-8 text-right shrink-0">{r.progress}%</span>
                     </div>
                     <div className="text-right">
                       <span style={{ color: r.statusColor, backgroundColor: r.statusBg }}
@@ -814,37 +823,43 @@ export default function ProjectReportsPage() {
                   선택한 기간에 해당하는 접근성 항목이 없습니다.
                 </div>
               ) : (
-                Object.entries(a11yFilteredItems.groups).map(([group, { items: gItems }]) => (
-                  <div key={group}>
-                    {/* 그룹 헤더 */}
-                    <div className="flex items-center justify-between px-4 py-2 bg-[#f8f9fc] border-b border-[#eef1f6] sticky top-0 z-10">
-                      <span className="text-[11px] font-bold text-[#3a4358] truncate">{group}</span>
-                      <span className="text-[10.5px] font-semibold text-[#9aa2b3] shrink-0 ml-2">{gItems.length}건</span>
-                    </div>
-                    {/* 그룹 항목 */}
-                    {gItems.map(item => (
-                      <div key={item.id}
-                        className="flex items-start gap-3 px-4 py-3 border-b border-[#f1f3f8] hover:bg-[#fafbfd] transition-colors">
-                        {/* 상태 배지 */}
-                        <span
-                          style={{ color: item.status.color, backgroundColor: item.status.bg }}
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 mt-0.5 whitespace-nowrap">
-                          {item.status.label}
-                        </span>
-                        {/* 항목명 */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-semibold text-[#22304a] leading-snug break-words">{item.text}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10.5px] text-[#9aa2b3] font-medium">{item.due}</span>
-                            {item.assignee !== '미지정' && (
-                              <span className="text-[10.5px] text-[#6b7488] font-medium">· {item.assignee}</span>
-                            )}
+                Object.entries(a11yFilteredItems.groups).map(([group, { items: gItems }]) => {
+                  const isOpen = expandedA11yGroups.has(group);
+                  return (
+                    <div key={group}>
+                      {/* 그룹 헤더 — 아코디언 토글 */}
+                      <button
+                        onClick={() => toggleA11yGroup(group)}
+                        className="w-full flex items-center justify-between px-4 py-2.5 bg-[#f8f9fc] border-b border-[#eef1f6] sticky top-0 z-10 hover:bg-[#edf0f7] transition-colors cursor-pointer text-left">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <ChevronDown className={`w-3.5 h-3.5 text-[#8a93a5] shrink-0 transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`} />
+                          <span className="text-[11px] font-bold text-[#3a4358] truncate">{group}</span>
+                        </div>
+                        <span className="text-[10.5px] font-semibold text-[#9aa2b3] shrink-0 ml-2">{gItems.length}건</span>
+                      </button>
+                      {/* 그룹 항목 */}
+                      {isOpen && gItems.map(item => (
+                        <div key={item.id}
+                          className="flex items-start gap-3 px-4 py-3 border-b border-[#f1f3f8] hover:bg-[#fafbfd] transition-colors">
+                          <span
+                            style={{ color: item.status.color, backgroundColor: item.status.bg }}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 mt-0.5 whitespace-nowrap">
+                            {item.status.label}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-semibold text-[#22304a] leading-snug break-words">{item.text}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10.5px] text-[#9aa2b3] font-medium">{item.due}</span>
+                              {item.assignee !== '미지정' && (
+                                <span className="text-[10.5px] text-[#6b7488] font-medium">· {item.assignee}</span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ))
+                      ))}
+                    </div>
+                  );
+                })
               )}
             </div>
           </section>
